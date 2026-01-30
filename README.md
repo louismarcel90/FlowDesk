@@ -1,7 +1,7 @@
-## 📌 FlowDesk — Decision Intelligence & Governance Platform
+# 📌 FlowDesk — Decision Intelligence & Governance Platform
 
 
-### 1. 🧠 What This Project Is / Why It Exists
+## 1. 🧠 What This Project Is / Why It Exists
 
 
 FlowDesk is a full-stack decision governance platform that systematically captures, structures, audits, and evolves high-impact decisions.
@@ -13,7 +13,7 @@ It institutionalizes decision traceability across organizations, mitigating know
 ---
 
 
-### 2. ⚠️ Problems FlowDesk Solves
+## 2. ⚠️ Problems FlowDesk Solves
 
 
 - Decision loss & knowledge decay: fragmented decisions lose rationale and accountability
@@ -24,7 +24,7 @@ It institutionalizes decision traceability across organizations, mitigating know
 ---
 
 
-### 3. 🧪 What This Project Demonstrates
+## 3. 🧪 What This Project Demonstrates
 
 
 - System-level thinking: decisions modeled as first-class domain entities rather than unstructured documents
@@ -35,7 +35,7 @@ It institutionalizes decision traceability across organizations, mitigating know
 ---
 
 
-### 4. 🧱 Core Capabilities
+## 4. 🧱 Core Capabilities
 
 
 - Structured decision lifecycle: decisions modeled with clear context, options, trade-offs, ownership, and outcomes
@@ -46,7 +46,7 @@ It institutionalizes decision traceability across organizations, mitigating know
 ---
 
 
-### 5. 📐 Scale & Constraints
+## 5. 📐 Scale & Constraints
 
 
 - Designed for multi-team decision workflows, where clarity and traceability matter more than raw throughput
@@ -57,7 +57,7 @@ It institutionalizes decision traceability across organizations, mitigating know
 ---
 
 
-### 6. ⚙️ Key Engineering Features
+## 6. ⚙️ Key Engineering Features
 
 
 - Intentional architecture & boundaries: modular monolith with clear domains, optimized for speed and long-term evolution
@@ -68,7 +68,7 @@ It institutionalizes decision traceability across organizations, mitigating know
 ---
 
 
-### 7. 🧰 Technologies Used in Practice
+## 7. 🧰 Technologies Used in Practice
 
 
 <p align="left">
@@ -85,7 +85,7 @@ It institutionalizes decision traceability across organizations, mitigating know
 ---
 
 
-### 8. 🏛️ Why This Project Matters
+## 8. 🏛️ Why This Project Matters
 
 
 Treating decisions as long-lived system artifacts — capturing organisational reasoning rather than letting it decay into tribal knowledge is a must.
