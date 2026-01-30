@@ -1,4 +1,4 @@
-# 📌 FlowDesk — Decision Intelligence & Governance Platform
+# 📌 FlowDesk — *Decision Intelligence & Governance Platform*
 
 
 ## 1. 🧠 What This Project Is / Why It Exists
