@@ -1,7 +1,7 @@
 # 📌 FlowDesk — *Decision Intelligence & Governance Platform*
 
 
-## 1. 🧠 What This Project Is / Why It Exists
+## 1. 🧠 What is FlowDesk / Why It Exists
 
 
 FlowDesk is a full-stack decision governance platform that systematically captures, structures, audits, and evolves high-impact decisions.
@@ -24,7 +24,7 @@ It institutionalizes decision traceability across organizations, mitigating know
 ---
 
 
-## 3. 🧪 What This Project Demonstrates
+## 3. 🧪 What FlowDesk Demonstrates
 
 
 - System-level thinking: decisions modeled as first-class domain entities rather than unstructured documents
@@ -85,7 +85,7 @@ It institutionalizes decision traceability across organizations, mitigating know
 ---
 
 
-## 8. 🏛️ Why This Project Matters
+## 8. 🏛️ Why FlowDesk Matters
 
 
 Treating decisions as long-lived system artifacts — capturing organisational reasoning rather than letting it decay into tribal knowledge is a must.
