@@ -91,5 +91,4 @@ It institutionalizes decision traceability across organizations, mitigating know
 Treating decisions as long-lived system artifacts — capturing organisational reasoning rather than letting it decay into tribal knowledge is a must.
 
 
-FlowDesk hard-codes decision traceability, accountability, and governance into the architecture itself — balance technical rigor, human workflows, and business impact.
-
+FlowDesk hard-codes decision traceability, accountability, and governance into the architecture itself — aligning technical rigor with human workflows and measurable business impact.
