@@ -1,8 +1,0 @@
-node_modules
-.env
-.env.*
-dist
-.next
-coverage
-.turbo
-.DS_Store
