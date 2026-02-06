@@ -1,4 +1,4 @@
-version: "3.9"
+version: '3.9'
 services:
   postgres:
     image: postgres:16
@@ -6,24 +6,45 @@ services:
       POSTGRES_USER: flowdesk
       POSTGRES_PASSWORD: flowdesk
       POSTGRES_DB: flowdesk
-    ports: ["5432:5432"]
-    volumes: ["pgdata:/var/lib/postgresql/data"]
+    ports: ['5432:5432']
+    volumes: ['pgdata:/var/lib/postgresql/data']
 
   redis:
     image: redis:7
-    ports: ["6379:6379"]
+    ports: ['6379:6379']
 
   redpanda:
     image: redpandadata/redpanda:v24.1.9
-    command: ["redpanda", "start", "--overprovisioned", "--smp", "1", "--memory", "1G", "--reserve-memory", "0M", "--node-id", "0", "--check=false"]
+    command:
+      [
+        'redpanda',
+        'start',
+        '--overprovisioned',
+        '--smp',
+        '1',
+        '--memory',
+        '1G',
+        '--reserve-memory',
+        '0M',
+        '--node-id',
+        '0',
+        '--check=false',
+      ]
     ports:
-      - "9092:9092"   # Kafka API
-      - "9644:9644"   # admin
+      - '9092:9092' # Kafka API
+      - '9644:9644' # admin
 
   opa:
     image: openpolicyagent/opa:0.68.0
-    command: ["run", "--server", "--addr", "0.0.0.0:8181", "--set=decision_logs.console=true"]
-    ports: ["8181:8181"]
+    command:
+      [
+        'run',
+        '--server',
+        '--addr',
+        '0.0.0.0:8181',
+        '--set=decision_logs.console=true',
+      ]
+    ports: ['8181:8181']
 
 volumes:
   pgdata:

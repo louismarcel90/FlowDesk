@@ -11,7 +11,7 @@ export class AppError extends Error {
     public code: ErrorCode,
     message: string,
     public status: number,
-    public meta?: Record<string, unknown>
+    public meta?: Record<string, unknown>,
   ) {
     super(message);
   }
