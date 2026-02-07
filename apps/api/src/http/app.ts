@@ -6,6 +6,13 @@ import { createSql } from '../db/client';
 import Redis from 'ioredis';
 import { registerHealthRoutes } from '../modules/health/health.routes';
 
+import { buildAuthRepo } from '../modules/auth/auth.repo';
+import { registerAuthRoutes } from '../modules/auth/auth.routes';
+import { registerMeRoutes } from '../modules/auth/me.routes';
+import { buildAuditRepo } from '../modules/audit/audit.repo';
+import { buildAuditService } from '../modules/audit/audit.service';
+
+
 export async function buildApp() {
 
   const app = Fastify({
@@ -21,6 +28,10 @@ export async function buildApp() {
   // --- deps (DI minimal)
   const sql = createSql();
   const redis = new Redis(env.REDIS_URL, { maxRetriesPerRequest: 2 });
+  const authRepo = buildAuthRepo(sql);
+  const auditRepo = buildAuditRepo(sql);
+  const audit = buildAuditService(auditRepo);
+
 
   // --- request context + correlation
  app.addHook('onRequest', async (req, reply) => {
@@ -46,6 +57,11 @@ export async function buildApp() {
 
   // --- routes
   registerHealthRoutes(app, { sql, redis });
+  app.register(async (a) => registerAuthRoutes(a, { authRepo, audit }));
+  app.register(async (a) =>
+  registerMeRoutes(a, { getRole: (orgId, userId) => authRepo.getMembership(orgId, userId) })
+);
+
 
   // --- shutdown
   app.addHook('onClose', async () => {

@@ -1,17 +1,20 @@
-import postgres, { JSONValue } from 'postgres';
+import type { Sql } from '../../db/client';
+
+type JsonPrimitive = string | number | boolean | null;
+type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };
 
 export type AuditEvent = {
   id: string;
-  occurredAt: string;
+  occurredAt: Date;
   actorUserId?: string;
   action: string;
   entityType: string;
   entityId: string;
   correlationId: string;
-  payload: JSONValue;
+  payload: JsonValue;
 };
 
-export function buildAuditRepo(sql: postgres.Sql) {
+export function buildAuditRepo(sql: Sql) {
   return {
     async append(e: AuditEvent) {
       await sql`
