@@ -9,7 +9,14 @@
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "format": "prettier -w .",
-    "format:check": "prettier -c ."
+    "format:check": "prettier -c .",
+    "infra:up": "docker compose -f infra/docker-compose.yml up -d",
+    "infra:down": "docker compose -f infra/docker-compose.yml down",
+    "infra:logs": "docker compose -f infra/docker-compose.yml logs -f --tail=200",
+    "infra:ps": "docker compose -f infra/docker-compose.yml ps",
+    "infra:reset": "docker compose -f infra/docker-compose.yml down -v",
+    "api:dev": "pnpm -C apps/api dev",
+    "api:db:migrate": "pnpm -C apps/api db:migrate"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^8.54.0",

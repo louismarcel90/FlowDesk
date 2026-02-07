@@ -1,7 +1,7 @@
 import Fastify from 'fastify';
 import type { FastifyRequest } from 'fastify';
 import { env } from './config/env';
-import { createContext } from './core/request-context';
+import { buildRequestContext } from './core/request-context';
 import { AppError } from './core/errors';
 
 export function buildApp() {
@@ -16,7 +16,7 @@ export function buildApp() {
   });
 
   app.addHook('onRequest', async (req: FastifyRequest) => {
-    req.ctx = createContext(req.headers);
+    req.ctx = buildRequestContext(req.headers);
   });
 
   app.setErrorHandler((err, req, reply) => {

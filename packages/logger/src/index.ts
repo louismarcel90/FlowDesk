@@ -1,4 +1,10 @@
-export function logInfo(message: string, meta?: Record<string, unknown>) {
-  // placeholder: pino viendra à l'étape API (plus tard)
-  console.log(JSON.stringify({ level: 'info', message, ...meta }));
+import pino from 'pino';
+
+export type Logger = pino.Logger;
+
+export function createLogger(opts?: { level?: string; name?: string }) {
+  return pino({
+    level: opts?.level ?? process.env.LOG_LEVEL ?? 'info',
+    base: { service: opts?.name ?? 'flowdesk' }
+  });
 }

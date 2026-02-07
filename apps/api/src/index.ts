@@ -1,4 +1,9 @@
-import { logInfo } from '@flowdesk/logger';
+import {createLogger} from '@flowdesk/logger';
 import { getNodeEnv } from '@flowdesk/config';
 
-logInfo('api started (placeholder)', { env: getNodeEnv() });
+const env =  getNodeEnv();
+const logger = createLogger({
+    name: 'api',
+    level: env === 'production' ? 'info' : 'debug',
+});
+logger.info('Starting API...');
