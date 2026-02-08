@@ -33,9 +33,8 @@ allow {
   role_rank[input.principal.role] >= required_rank[input.action]
 }
 
-reason := r if {
+reason := "DENY: insufficient role or org mismatch" if {
   not allow
-  r := "DENY: insufficient role or org mismatch"
 }
 
 rule := "flowdesk.authz/allow"

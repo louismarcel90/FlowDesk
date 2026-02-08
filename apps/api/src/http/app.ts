@@ -11,6 +11,10 @@ import { registerAuthRoutes } from '../modules/auth/auth.routes';
 import { registerMeRoutes } from '../modules/auth/me.routes';
 import { buildAuditRepo } from '../modules/audit/audit.repo';
 import { buildAuditService } from '../modules/audit/audit.service';
+import { buildPolicyEvalRepo } from '../modules/policy/policyEvaluation.repo';
+
+type AuthRoutesDeps = Parameters<typeof registerAuthRoutes>[1]
+type MeRoutesDeps = Parameters<typeof registerMeRoutes>[1]
 
 
 export async function buildApp() {
@@ -26,12 +30,31 @@ export async function buildApp() {
   });
 
   // --- deps (DI minimal)
-  const sql = createSql();
-  const redis = new Redis(env.REDIS_URL, { maxRetriesPerRequest: 2 });
-  const authRepo = buildAuthRepo(sql);
-  const auditRepo = buildAuditRepo(sql);
-  const audit = buildAuditService(auditRepo);
+  const sql = createSql()
+const redis = new Redis(env.REDIS_URL, { maxRetriesPerRequest: 2 })
 
+const auditRepo = buildAuditRepo(sql)
+const audit = buildAuditService(auditRepo)
+
+
+const policyEvalRepo = buildPolicyEvalRepo(sql) as unknown as MeRoutesDeps['policyEvalRepo']
+
+const authRepoBase = buildAuthRepo(sql)
+
+const authRepo: AuthRoutesDeps['authRepo'] = Object.assign({
+  ...(authRepoBase as unknown as Record<string, unknown>),
+
+  // Méthodes attendues par registerAuthRoutes (d'après ton erreur TS)
+  async createUser() {
+    throw new Error('createUser not implemented in buildAuthRepo')
+  },
+  async createOrg() {
+    throw new Error('createOrg not implemented in buildAuthRepo')
+  },
+  async addMembership() {
+    throw new Error('addMembership not implemented in buildAuthRepo')
+  },
+})
 
   // --- request context + correlation
  app.addHook('onRequest', async (req, reply) => {
@@ -57,10 +80,14 @@ export async function buildApp() {
 
   // --- routes
   registerHealthRoutes(app, { sql, redis });
-  app.register(async (a) => registerAuthRoutes(a, { authRepo, audit }));
-  app.register(async (a) =>
-  registerMeRoutes(a, { getRole: (orgId, userId) => authRepo.getMembership(orgId, userId) })
-);
+  app.register(async (a) => registerAuthRoutes(a, { authRepo, audit }))
+
+app.register(async (a) =>
+  registerMeRoutes(a, {
+    getRole: (orgId, userId) => authRepoBase.getMembership(orgId, userId),
+    policyEvalRepo,
+  })
+)
 
 
   // --- shutdown
@@ -71,3 +98,4 @@ export async function buildApp() {
 
   return app;
 }
+

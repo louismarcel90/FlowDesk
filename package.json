@@ -17,7 +17,7 @@
     "infra:reset": "docker compose -f infra/docker-compose.yml down -v",
     "api:dev": "pnpm -C apps/api dev",
     "api:db:migrate": "pnpm -C apps/api db:migrate",
-    "policy:test": "docker run --rm -v \"$PWD/apps/policy:/policy\" openpolicyagent/opa:0.68.0 test /policy/policies -v",
+    "policy:test": "docker run --rm -v \"%cd%\\apps\\policy:/policy\" openpolicyagent/opa:0.68.0 test /policy/policies -v",
     "policy:push": "pnpm -C apps/policy push"
   },
   "devDependencies": {

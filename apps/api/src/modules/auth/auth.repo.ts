@@ -1,5 +1,5 @@
-import type { Sql} from '../../db/client';
-import type { Role } from './auth.types';
+import type { Sql } from "../../db/client";
+import type { Role } from "./auth.types";
 
 export type DbUser = {
   id: string;
@@ -8,20 +8,21 @@ export type DbUser = {
   displayName: string;
 };
 
+// Row "DB-shape" (snake_case) — doit matcher auth.routes.ts
+export type RefreshRow = {
+  id: string; // jti
+  user_id: string;
+  org_id: string | null;
+  token_hash: string;
+  expires_at: Date;
 
-export type RefreshTokenRow = {
-  id: string;
-  userId: string;
-  orgId: string | null;
-  tokenHash: string;
-  expiresAt: Date;
-  revokedAt: Date | null;
-  replacedBy: string | null;
-  lastUsedAt: Date | null;
+  revoked_at?: Date | null;
+  replaced_by?: string | null;
+  last_used_at?: Date | null;
 };
 
-type BeginCb = Parameters<typeof sql.begin>[0];
-type Tx = Parameters<BeginCb>[0];
+// type BeginCb = Parameters<Sql['begin']>[0];
+// type Tx = Parameters<BeginCb>[0];
 
 export function buildAuthRepo(sql: Sql) {
   return {
@@ -39,6 +40,32 @@ export function buildAuthRepo(sql: Sql) {
       return rows[0] ?? null;
     },
 
+    async createUser(u: DbUser): Promise<void> {
+      await sql`
+        insert into users (id, email, password_hash, display_name)
+        values (${u.id}, ${u.email}, ${u.passwordHash}, ${u.displayName})
+      `;
+    },
+
+    async createOrg(o: { id: string; name: string }): Promise<void> {
+      await sql`
+        insert into orgs (id, name)
+        values (${o.id}, ${o.name})
+      `;
+    },
+
+    async addMembership(m: {
+      id: string;
+      orgId: string;
+      userId: string;
+      role: Role;
+    }): Promise<void> {
+      await sql`
+        insert into org_members (id, org_id, user_id, role)
+        values (${m.id}, ${m.orgId}, ${m.userId}, ${m.role})
+      `;
+    },
+
     async getMembership(orgId: string, userId: string): Promise<Role | null> {
       const rows = await sql<{ role: Role }[]>`
         select role
@@ -49,37 +76,37 @@ export function buildAuthRepo(sql: Sql) {
       return rows[0]?.role ?? null;
     },
 
-    async upsertRefreshToken(params: {
-      id: string;
-      userId: string;
-      orgId: string | null;
-      tokenHash: string;
-      expiresAt: Date;
-    }): Promise<void> {
+    // auth.routes.ts appelle ça avec une RefreshRow snake_case
+    async upsertRefreshToken(rt: RefreshRow): Promise<void> {
       await sql`
         insert into refresh_tokens (id, user_id, org_id, token_hash, expires_at)
-        values (${params.id}, ${params.userId}, ${params.orgId}, ${params.tokenHash}, ${params.expiresAt})
+        values (${rt.id}, ${rt.user_id}, ${rt.org_id}, ${rt.token_hash}, ${rt.expires_at})
         on conflict (id) do update set
-          user_id = excluded.user_id,
-          org_id = excluded.org_id,
+          user_id    = excluded.user_id,
+          org_id     = excluded.org_id,
           token_hash = excluded.token_hash,
           expires_at = excluded.expires_at
       `;
     },
 
-    async findValidRefreshToken(id: string): Promise<RefreshTokenRow | null> {
-      const rows = await sql<RefreshTokenRow[]>`
+    // IMPORTANT:
+    // - on filtre revoked_at et expires_at
+    // - on NE filtre PAS replaced_by, sinon tu perds l’erreur "already used" (rotation)
+    async findValidRefreshToken(id: string): Promise<RefreshRow | null> {
+      const rows = await sql<RefreshRow[]>`
         select
           id,
-          user_id as "userId",
-          org_id as "orgId",
-          token_hash as "tokenHash",
-          expires_at as "expiresAt",
-          revoked_at as "revokedAt",
-          replaced_by as "replacedBy",
-          last_used_at as "lastUsedAt"
+          user_id,
+          org_id,
+          token_hash,
+          expires_at,
+          revoked_at,
+          replaced_by,
+          last_used_at
         from refresh_tokens
         where id = ${id}
+          and revoked_at is null
+          and expires_at > now()
         limit 1
       `;
       return rows[0] ?? null;
@@ -93,16 +120,18 @@ export function buildAuthRepo(sql: Sql) {
       `;
     },
 
+    // auth.routes.ts appelle rotateRefreshToken({ oldId, newId, userId, orgId, newTokenHash, newExpiresAt })
     async rotateRefreshToken(params: {
       oldId: string;
       newId: string;
       userId: string;
-      orgId: string | null;
+      orgId: string; // obligatoire pour matcher routes.ts (et éviter org missing)
       newTokenHash: string;
       newExpiresAt: Date;
     }): Promise<void> {
-      await sql.begin(async (tx : Tx) => {
-        const rows = await tx<{ revokedAt: Date | null; replacedBy: string | null }[]>`
+      await sql.begin(async () => {
+        // lock old row
+        const rows = await sql<{ revokedAt: Date | null; replacedBy: string | null }[]>`
           select
             revoked_at as "revokedAt",
             replaced_by as "replacedBy"
@@ -112,12 +141,12 @@ export function buildAuthRepo(sql: Sql) {
         `;
 
         const row = rows[0];
-        if (!row) throw new Error('REFRESH_NOT_FOUND');
-        if (row.revokedAt) throw new Error('REFRESH_REVOKED');
-        if (row.replacedBy) throw new Error('REFRESH_ALREADY_ROTATED');
+        if (!row) throw new Error("REFRESH_NOT_FOUND");
+        if (row.revokedAt) throw new Error("REFRESH_REVOKED");
+        if (row.replacedBy) throw new Error("REFRESH_ALREADY_ROTATED");
 
         // mark old as used + link to new
-        await tx`
+        await sql`
           update refresh_tokens
           set
             replaced_by = ${params.newId},
@@ -126,7 +155,7 @@ export function buildAuthRepo(sql: Sql) {
         `;
 
         // insert new token row
-        await tx`
+        await sql`
           insert into refresh_tokens (id, user_id, org_id, token_hash, expires_at)
           values (${params.newId}, ${params.userId}, ${params.orgId}, ${params.newTokenHash}, ${params.newExpiresAt})
         `;
