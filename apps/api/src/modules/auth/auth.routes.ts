@@ -19,7 +19,7 @@ type DbUser = {
 };
 
 type RefreshRow = {
-  id: string; // jti
+  id: string; 
   userId: string;
   tokenHash: string;
   expiresAt: Date;
@@ -76,7 +76,6 @@ const LogoutSchema = z.object({
 
 export async function registerAuthRoutes(app: FastifyInstance, deps: Deps) {
   app.post('/auth/register', async (req) => {
-    // ✅ plus de (req as any).ctx
     const ctx: RequestContext = req.ctx;
 
     const body = RegisterSchema.parse(req.body);
@@ -113,11 +112,13 @@ export async function registerAuthRoutes(app: FastifyInstance, deps: Deps) {
     const refresh = await signRefreshToken(userId);
 
     await deps.authRepo.upsertRefreshToken({
-      id: refresh.jti,
-      userId,
-      tokenHash: hashRefreshToken(refresh.token),
-      expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 14),
-    });
+  id: refresh.jti,
+  userId,
+  orgId,
+  tokenHash: hashRefreshToken(refresh.token),
+  expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 14)
+});
+
 
     return {
       user: { id: userId, email: body.email, displayName: body.displayName },
@@ -139,18 +140,21 @@ export async function registerAuthRoutes(app: FastifyInstance, deps: Deps) {
     const ok = await verifyPassword(user.passwordHash, body.password);
     if (!ok) throw new AppError('UNAUTHORIZED', 'Invalid credentials', 401);
 
-    const role = await deps.authRepo.getMembership(body.orgId, user.id);
-    if (!role) throw new AppError('FORBIDDEN', 'No membership in org', 403);
+const role = await deps.authRepo.getMembership(body.orgId, user.id);
+if (!role) throw new AppError('FORBIDDEN', 'No membership in org', 403);
 
-    const accessToken = await signAccessToken({ sub: user.id, orgId: body.orgId });
-    const refresh = await signRefreshToken(user.id);
+const accessToken = await signAccessToken({ sub: user.id, orgId: body.orgId });
+const refresh = await signRefreshToken(user.id);
 
-    await deps.authRepo.upsertRefreshToken({
-      id: refresh.jti,
-      userId: user.id,
-      tokenHash: hashRefreshToken(refresh.token),
-      expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 14),
-    });
+await deps.authRepo.upsertRefreshToken({
+  id: refresh.jti,
+  userId: user.id,
+  orgId: body.orgId,
+  tokenHash: hashRefreshToken(refresh.token),
+  expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 14),
+});
+
+
 
     await deps.audit.log(ctx, {
       actorUserId: user.id,
@@ -164,6 +168,7 @@ export async function registerAuthRoutes(app: FastifyInstance, deps: Deps) {
   });
 
  app.post('/auth/refresh', async (req) => {
+  const ctx = (req as any).ctx as RequestContext;
   const body = RefreshSchema.parse(req.body);
 
   const parsed = await verifyRefreshToken(body.refreshToken).catch(() => {
@@ -173,17 +178,48 @@ export async function registerAuthRoutes(app: FastifyInstance, deps: Deps) {
   const row = await deps.authRepo.findValidRefreshToken(parsed.jti);
   if (!row) throw new AppError('UNAUTHORIZED', 'Refresh token revoked/unknown', 401);
 
-  const expected = row.tokenHash;
   const got = hashRefreshToken(body.refreshToken);
-  if (expected !== got) throw new AppError('UNAUTHORIZED', 'Refresh token mismatch', 401);
+  if (row.token_hash !== got) throw new AppError('UNAUTHORIZED', 'Refresh token mismatch', 401);
 
-  throw new AppError(
-    'VALIDATION_ERROR',
-    'MVP requires re-login (orgId) for access token',
-    400,
-    { next: 'use /auth/login' }
-  );
+  if (!row.org_id) {
+    throw new AppError('INTERNAL', 'Refresh token missing org context', 500);
+  }
+
+  // rotation
+  const next = await signRefreshToken(parsed.userId);
+  const nextHash = hashRefreshToken(next.token);
+
+  try {
+await deps.authRepo.rotateRefreshToken({
+  oldId: parsed.jti,
+  newId: next.jti,
+  userId: parsed.userId,
+  orgId: row.org_id, // IMPORTANT: garder org_id si ton repo retourne snake_case
+  newTokenHash: nextHash,
+  newExpiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 14)
 });
+
+  } catch (e: any) {
+    // deterministic errors
+    if (String(e?.message).includes('REFRESH_REVOKED') || String(e?.message).includes('REFRESH_ALREADY_ROTATED')) {
+      throw new AppError('UNAUTHORIZED', 'Refresh token already used', 401, { hint: 're-login' });
+    }
+    throw e;
+  }
+
+  const accessToken = await signAccessToken({ sub: parsed.userId, orgId: row.org_id });
+
+  await deps.audit.log(ctx, {
+    actorUserId: parsed.userId,
+    action: 'AUTH_REFRESH',
+    entityType: 'refresh_token',
+    entityId: parsed.jti,
+    payload: { orgId: row.org_id }
+  });
+
+  return { accessToken, refreshToken: next.token };
+});
+
 
 
   app.post('/auth/logout', async (req) => {
