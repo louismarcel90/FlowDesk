@@ -69,8 +69,11 @@ services:
       - --addr
       - 0.0.0.0:8181
       - --set=decision_logs.console=true
+      - /policies
     ports:
       - "8181:8181"
+    volumes:
+      - ./policies:/policies:ro
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8181/health?plugins | grep -q 'ok'"]
       interval: 10s
