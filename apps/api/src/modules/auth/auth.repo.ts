@@ -67,11 +67,11 @@ export function buildAuthRepo(sql: Sql) {
     },
 
     async getMembership(orgId: string, userId: string): Promise<Role | null> {
-      const rows = await sql<{ role: Role }[]>`
-        select role
-        from org_members
-        where org_id = ${orgId} and user_id = ${userId}
-        limit 1
+      const rows = await sql`
+        SELECT role
+        FROM memberships
+        WHERE org_id = ${orgId} AND user_id = ${userId}
+        LIMIT  1
       `;
       return rows[0]?.role ?? null;
     },

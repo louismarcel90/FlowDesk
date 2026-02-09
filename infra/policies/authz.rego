@@ -1,47 +1,41 @@
-package flowdesk.authz
+package flowdesk.authz_lib
 
-default allow := false
+# Public function: allow_for(i) returns true/false
+allow_for(i) {
+  org_match(i)
+  required_rank[i.action]
+  role_rank[i.principal.role] >= required_rank[i.action]
+}
 
-# input:
-# {
-#   "principal": { "userId": "...", "orgId": "...", "role": "viewer|editor|approver|admin" },
-#   "action": "me.read" | "decision.read" | ...,
-#   "resource": { "type": "me|decision|...", "id": "...", "orgId": "..." }
-# }
+reason_for(i) = msg {
+  allow_for(i)
+  msg := "ALLOW"
+} else = msg {
+  msg := "DENY: insufficient role or org mismatch"
+}
 
 role_rank := {
   "viewer": 1,
   "editor": 2,
   "approver": 3,
-  "admin": 4
+  "admin": 4,
 }
 
 required_rank := {
   "me.read": 1,
-  "admin.policies.read": 4
+  "admin.policies.read": 4,
+
+  "decision.read": 1,
+  "decision.create": 2,
+  "decision.update": 2,
+  "decision.comment": 1,
+  "decision.approve": 3,
 }
 
-# guard: principal/org must match resource.orgId when present
-org_match {
-  not input.resource.orgId
+org_match(i) {
+  not i.resource.orgId
 }
 
-org_match {
-  input.resource.orgId == input.principal.orgId
+org_match(i) {
+  i.resource.orgId == i.principal.orgId
 }
-
-
-allow {
-  org_match
-  required_rank[input.action]
-  role_rank[input.principal.role] >= required_rank[input.action]
-}
-
-reason := msg {
-  allow
-  msg := "ALLOW"
-} else := msg {
-  msg := "DENY: insufficient role or org mismatch"
-}
-
-rule := "flowdesk.authz/allow"

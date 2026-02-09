@@ -6,3 +6,9 @@ export const RoleRank: Record<Role, number> = {
   approver: 3,
   admin: 4
 };
+
+export type AuthPrincipal = {
+  id: string;
+  orgId: string;
+  role: string;
+};

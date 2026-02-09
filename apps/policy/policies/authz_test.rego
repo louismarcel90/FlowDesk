@@ -1,4 +1,6 @@
-package flowdesk.authz
+package flowdesk.authz_test
+
+import data.flowdesk.authz.allow
 
 test_allow_me_read_viewer {
   allow with input as {

@@ -230,7 +230,7 @@ export async function registerAuthRoutes(app: FastifyInstance, deps: Deps) {
         oldId: parsed.jti,
         newId: next.jti,
         userId: parsed.userId,
-        orgId: row.org_id, // IMPORTANT: garder org_id si ton repo renvoie snake_case
+        orgId: row.org_id, 
         newTokenHash: nextHash,
         newExpiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 14),
       });

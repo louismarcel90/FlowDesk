@@ -23,12 +23,12 @@ export async function registerHealthRoutes(app: FastifyInstance, deps: Deps) {
 
   app.get('/ready', async () => {
     let dbok = false;
-    try {
-      await (deps.sql as unknown as (q: string) => Promise<unknown>)('select 1');
-      dbok = true;
-    } catch {
-      dbok = false;
-    }
+try {
+  await deps.sql`select 1`;  dbok = true;
+} catch (err) {
+  app.log.error({ err }, 'DB readiness check failed');
+  dbok = false;
+}
 
     let redisok = false;
     try {

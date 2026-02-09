@@ -13,6 +13,10 @@ import { buildAuditRepo } from '../modules/audit/audit.repo';
 import { buildAuditService } from '../modules/audit/audit.service';
 import { buildPolicyEvalRepo } from '../modules/policy/policyEvaluation.repo';
 
+import { buildDecisionsRepo } from '../modules/decisions/decisions.repo';
+import { registerDecisionRoutes } from '../modules/decisions/decisions.routes';
+
+
 type AuthRoutesDeps = Parameters<typeof registerAuthRoutes>[1]
 type MeRoutesDeps = Parameters<typeof registerMeRoutes>[1]
 
@@ -41,10 +45,31 @@ const policyEvalRepo = buildPolicyEvalRepo(sql) as unknown as MeRoutesDeps['poli
 
 const authRepoBase = buildAuthRepo(sql)
 
+
 const authRepo: AuthRoutesDeps['authRepo'] = Object.assign({
   ...(authRepoBase as unknown as Record<string, unknown>),
+ async findUserByEmail(email: string) {
+    console.log("[authRepo.findUserByEmail OVERRIDE]", email);
 
-  // Méthodes attendues par registerAuthRoutes (d'après ton erreur TS)
+    const rows = await (sql)`
+      SELECT
+        u.id            AS "id",
+        u.email         AS "email",
+        u.password_hash AS "passwordHash",
+        u.display_name  AS "displayName",
+        m.org_id        AS "orgId",
+        m.role          AS "role"
+      FROM users u
+      JOIN memberships m ON m.user_id = u.id
+      WHERE u.email = ${email}
+      ORDER BY m.created_at DESC
+      LIMIT 1
+    `;
+
+    return rows[0] ?? null;
+  },
+
+
   async createUser() {
     throw new Error('createUser not implemented in buildAuthRepo')
   },
@@ -55,6 +80,13 @@ const authRepo: AuthRoutesDeps['authRepo'] = Object.assign({
     throw new Error('addMembership not implemented in buildAuthRepo')
   },
 })
+
+const decisionsRepo = buildDecisionsRepo(sql);
+
+app.register(async (a) =>
+  registerDecisionRoutes(a, { decisionsRepo, authRepo, policyEvalRepo, audit })
+);
+
 
   // --- request context + correlation
  app.addHook('onRequest', async (req, reply) => {
