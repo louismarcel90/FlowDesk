@@ -23,12 +23,13 @@ export async function registerHealthRoutes(app: FastifyInstance, deps: Deps) {
 
   app.get('/ready', async () => {
     let dbok = false;
-try {
-  await deps.sql`select 1`;  dbok = true;
-} catch (err) {
-  app.log.error({ err }, 'DB readiness check failed');
-  dbok = false;
-}
+    try {
+      await deps.sql`select 1`;
+      dbok = true;
+    } catch (err) {
+      app.log.error({ err }, 'DB readiness check failed');
+      dbok = false;
+    }
 
     let redisok = false;
     try {
@@ -40,11 +41,16 @@ try {
     const opaok = await checkOPA();
 
     if (!dbok || !redisok || !opaok) {
-      throw new AppError('DEPENDENCY_UNAVAILABLE', 'Dependency unavailable', 503, {
-        dbok,
-        redisok,
-        opaok,
-      });
+      throw new AppError(
+        'DEPENDENCY_UNAVAILABLE',
+        'Dependency unavailable',
+        503,
+        {
+          dbok,
+          redisok,
+          opaok,
+        },
+      );
     }
 
     return { ok: true, dbok, redisok, opaok };

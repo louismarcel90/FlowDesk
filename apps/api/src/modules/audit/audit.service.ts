@@ -8,12 +8,12 @@ type AuditRepo = ReturnType<typeof buildAuditRepo>;
 
 export function buildAuditService(
   auditRepo: AuditRepo,
-  now = () => new Date()
+  now = () => new Date(),
 ) {
   return {
     async log(
       ctx: RequestContext,
-      event: Omit<AuditEvent, 'id' | 'occurredAt' | 'correlationId'>
+      event: Omit<AuditEvent, 'id' | 'occurredAt' | 'correlationId'>,
     ) {
       await auditRepo.append({
         id: randomUUID(),

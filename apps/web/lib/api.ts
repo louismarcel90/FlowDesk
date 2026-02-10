@@ -9,7 +9,7 @@ export async function apiFetch(path: string, init?: RequestInit) {
   const token = getToken();
   const headers = new Headers(init?.headers);
   headers.set('content-type', 'application/json');
-  if (token) headers.set('authorization', `Bearer ${token}`);
+  if (token) headers.set('Authorization', `Bearer ${token}`);
 
   const res = await fetch(`${API_URL}${path}`, { ...init, headers });
   const json = await res.json().catch(() => null);

@@ -6,19 +6,25 @@ import { AppError } from '../../core/errors';
 import { authenticate } from '../auth/auth.middleware';
 import { authorize } from '../policy/authorize';
 
-import { CreateDecisionSchema, NewVersionSchema, AddCommentSchema } from './decisions.schemas';
-import type { Decision, DecisionListItem, DecisionVersion, DecisionComment } from './decisions.repo';
+import {
+  CreateDecisionSchema,
+  NewVersionSchema,
+  AddCommentSchema,
+} from './decisions.schemas';
+import type {
+  Decision,
+  DecisionListItem,
+  DecisionVersion,
+  DecisionComment,
+} from './decisions.repo';
 import { Role } from '../auth/auth.types';
 
 // Ce que ton middleware authenticate ajoute sur req
 type Principal = {
   orgId: string;
   userId: string;
+  role: string;
 };
-
-type Membership = {
-  Role: Role;
-}
 
 type DecisionsRepo = {
   listDecisions(orgId: string): Promise<DecisionListItem[]>;
@@ -26,7 +32,12 @@ type DecisionsRepo = {
   getVersions(decisionId: string): Promise<DecisionVersion[]>;
   getComments(decisionId: string): Promise<DecisionComment[]>;
 
-  createDecision(input: { id: string; orgId: string; title: string; createdBy: string }): Promise<void>;
+  createDecision(input: {
+    id: string;
+    orgId: string;
+    title: string;
+    createdBy: string;
+  }): Promise<void>;
   createVersion(input: {
     id: string;
     decisionId: string;
@@ -37,8 +48,17 @@ type DecisionsRepo = {
 
   nextVersionNumber(decisionId: string): Promise<number>;
 
-  approveDecision(input: { decisionId: string; approvedBy: string; orgId: string }): Promise<void>;
-  addComment(input: { id: string; decisionId: string; createdBy: string; body: string }): Promise<void>;
+  approveDecision(input: {
+    decisionId: string;
+    approvedBy: string;
+    orgId: string;
+  }): Promise<void>;
+  addComment(input: {
+    id: string;
+    decisionId: string;
+    createdBy: string;
+    body: string;
+  }): Promise<void>;
 };
 
 type Deps = {
@@ -68,20 +88,26 @@ export async function registerDecisionRoutes(app: FastifyInstance, deps: Deps) {
     {
       preHandler: [
         authenticate({
-          getRole: async (orgId: string, userId: string): Promise<Role | null> => {
-            const membership = await deps.authRepo.getMembership(orgId, userId) as Membership | null;
-            return membership?.Role ?? null;},
+          getRole: async (
+            orgId: string,
+            userId: string,
+          ): Promise<Role | null> => {
+            return (await deps.authRepo.getMembership(
+              orgId,
+              userId,
+            )) as Role | null;
+          },
         }),
       ],
     },
-    async (req,reply) => {
+    async (req, reply) => {
       const ctx = getCtx(req);
       const principal = req.principal as Principal | null;
 
-      if(!principal) {
+      if (!principal) {
         reply.code(401).send({ error: 'Unauthorized' });
         return;
-      } 
+      }
 
       await authorize({
         ctx,
@@ -92,7 +118,7 @@ export async function registerDecisionRoutes(app: FastifyInstance, deps: Deps) {
       });
 
       return deps.decisionsRepo.listDecisions(principal.orgId);
-    }
+    },
   );
 
   // CREATE (draft + version 1)
@@ -101,9 +127,15 @@ export async function registerDecisionRoutes(app: FastifyInstance, deps: Deps) {
     {
       preHandler: [
         authenticate({
-          getRole: async (orgId: string, userId: string): Promise<Role | null> => {
-            const membership = await deps.authRepo.getMembership(orgId, userId) as Membership | null;
-            return membership?.Role ?? null;},
+          getRole: async (
+            orgId: string,
+            userId: string,
+          ): Promise<Role | null> => {
+            return (await deps.authRepo.getMembership(
+              orgId,
+              userId,
+            )) as Role | null;
+          },
         }),
       ],
     },
@@ -147,7 +179,7 @@ export async function registerDecisionRoutes(app: FastifyInstance, deps: Deps) {
       });
 
       return { id: decisionId };
-    }
+    },
   );
 
   // DETAIL
@@ -156,9 +188,15 @@ export async function registerDecisionRoutes(app: FastifyInstance, deps: Deps) {
     {
       preHandler: [
         authenticate({
-          getRole: async (orgId: string, userId: string): Promise<Role | null> => {
-            const membership = await deps.authRepo.getMembership(orgId, userId) as Membership | null;
-            return membership?.Role ?? null;},
+          getRole: async (
+            orgId: string,
+            userId: string,
+          ): Promise<Role | null> => {
+            return (await deps.authRepo.getMembership(
+              orgId,
+              userId,
+            )) as Role | null;
+          },
         }),
       ],
     },
@@ -175,14 +213,17 @@ export async function registerDecisionRoutes(app: FastifyInstance, deps: Deps) {
         policyEvalRepo: deps.policyEvalRepo,
       });
 
-      const decision = await deps.decisionsRepo.getDecision(id, principal.orgId);
+      const decision = await deps.decisionsRepo.getDecision(
+        id,
+        principal.orgId,
+      );
       if (!decision) throw new AppError('NOT_FOUND', 'Decision not found', 404);
 
       const versions = await deps.decisionsRepo.getVersions(id);
       const comments = await deps.decisionsRepo.getComments(id);
 
       return { decision, versions, comments };
-    }
+    },
   );
 
   // NEW VERSION
@@ -191,9 +232,15 @@ export async function registerDecisionRoutes(app: FastifyInstance, deps: Deps) {
     {
       preHandler: [
         authenticate({
-          getRole: async (orgId: string, userId: string): Promise<Role | null> => {
-            const membership = await deps.authRepo.getMembership(orgId, userId) as Membership | null;
-            return membership?.Role ?? null;},
+          getRole: async (
+            orgId: string,
+            userId: string,
+          ): Promise<Role | null> => {
+            return (await deps.authRepo.getMembership(
+              orgId,
+              userId,
+            )) as Role | null;
+          },
         }),
       ],
     },
@@ -211,7 +258,10 @@ export async function registerDecisionRoutes(app: FastifyInstance, deps: Deps) {
         policyEvalRepo: deps.policyEvalRepo,
       });
 
-      const decision = await deps.decisionsRepo.getDecision(id, principal.orgId);
+      const decision = await deps.decisionsRepo.getDecision(
+        id,
+        principal.orgId,
+      );
       if (!decision) throw new AppError('NOT_FOUND', 'Decision not found', 404);
       if (decision.status !== 'draft') {
         throw new AppError('CONFLICT', 'Decision is not editable', 409);
@@ -236,7 +286,7 @@ export async function registerDecisionRoutes(app: FastifyInstance, deps: Deps) {
       });
 
       return { ok: true, version };
-    }
+    },
   );
 
   // APPROVE
@@ -245,9 +295,15 @@ export async function registerDecisionRoutes(app: FastifyInstance, deps: Deps) {
     {
       preHandler: [
         authenticate({
-          getRole: async (orgId: string, userId: string): Promise<Role | null> => {
-            const membership = await deps.authRepo.getMembership(orgId, userId) as Membership | null;
-            return membership?.Role ?? null;},
+          getRole: async (
+            orgId: string,
+            userId: string,
+          ): Promise<Role | null> => {
+            return (await deps.authRepo.getMembership(
+              orgId,
+              userId,
+            )) as Role | null;
+          },
         }),
       ],
     },
@@ -264,7 +320,10 @@ export async function registerDecisionRoutes(app: FastifyInstance, deps: Deps) {
         policyEvalRepo: deps.policyEvalRepo,
       });
 
-      const decision = await deps.decisionsRepo.getDecision(id, principal.orgId);
+      const decision = await deps.decisionsRepo.getDecision(
+        id,
+        principal.orgId,
+      );
       if (!decision) throw new AppError('NOT_FOUND', 'Decision not found', 404);
 
       await deps.decisionsRepo.approveDecision({
@@ -282,7 +341,7 @@ export async function registerDecisionRoutes(app: FastifyInstance, deps: Deps) {
       });
 
       return { ok: true };
-    }
+    },
   );
 
   // COMMENT
@@ -291,9 +350,15 @@ export async function registerDecisionRoutes(app: FastifyInstance, deps: Deps) {
     {
       preHandler: [
         authenticate({
-          getRole: async (orgId: string, userId: string): Promise<Role | null> => {
-            const membership = await deps.authRepo.getMembership(orgId, userId) as Membership | null;
-            return membership?.Role ?? null;},
+          getRole: async (
+            orgId: string,
+            userId: string,
+          ): Promise<Role | null> => {
+            return (await deps.authRepo.getMembership(
+              orgId,
+              userId,
+            )) as Role | null;
+          },
         }),
       ],
     },
@@ -302,7 +367,6 @@ export async function registerDecisionRoutes(app: FastifyInstance, deps: Deps) {
       const principal = getPrincipal(req);
       const id = getIdParam(req);
       const body = AddCommentSchema.parse(getBody(req));
-
 
       await authorize({
         ctx,
@@ -328,6 +392,6 @@ export async function registerDecisionRoutes(app: FastifyInstance, deps: Deps) {
       });
 
       return { ok: true };
-    }
+    },
   );
 }

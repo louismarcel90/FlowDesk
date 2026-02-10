@@ -11,8 +11,8 @@ describe('auth', () => {
         email: 'alice@example.com',
         password: 'password123',
         displayName: 'Alice',
-        orgName: 'FlowDesk Inc'
-      }
+        orgName: 'FlowDesk Inc',
+      },
     });
 
     // This test assumes DB is migrated + available (integration-ish).

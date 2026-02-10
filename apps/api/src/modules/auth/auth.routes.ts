@@ -1,18 +1,18 @@
-import type { FastifyInstance } from "fastify";
-import { z } from "zod";
-import { randomUUID, timingSafeEqual } from "node:crypto";
+import type { FastifyInstance } from 'fastify';
+import { z } from 'zod';
+import { randomUUID, timingSafeEqual } from 'node:crypto';
 
-import { AppError } from "../../core/errors";
-import type { RequestContext } from "../../core/request-context";
+import { AppError } from '../../core/errors';
+import type { RequestContext } from '../../core/request-context';
 
-import { hashPassword, verifyPassword } from "./auth.crypto";
+import { hashPassword, verifyPassword } from './auth.crypto';
 import {
   signAccessToken,
   signRefreshToken,
   verifyRefreshToken,
   hashRefreshToken,
-} from "./auth.jwt";
-import type { Role } from "./auth.types";
+} from './auth.jwt';
+import type { Role } from './auth.types';
 
 type JsonPrimitive = string | number | boolean | null;
 type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };
@@ -51,8 +51,8 @@ type Deps = {
     rotateRefreshToken(args: {
       oldId: string;
       newId: string;
+      orgId: string;
       userId: string;
-      orgId: string; // IMPORTANT: ici on garde du camelCase car c’est un argument applicatif
       newTokenHash: string;
       newExpiresAt: Date;
     }): Promise<void>;
@@ -107,12 +107,13 @@ function safeEqual(a: string, b: string): boolean {
 }
 
 export async function registerAuthRoutes(app: FastifyInstance, deps: Deps) {
-  app.post("/auth/register", async (req) => {
-    const ctx: RequestContext = (req).ctx as RequestContext;
-    const body = RegisterSchema.parse((req).body);
+  app.post('/auth/register', async (req) => {
+    const ctx: RequestContext = req.ctx as RequestContext;
+    const body = RegisterSchema.parse(req.body);
 
     const existing = await deps.authRepo.findUserByEmail(body.email);
-    if (existing) throw new AppError("CONFLICT", "Email already registered", 409);
+    if (existing)
+      throw new AppError('CONFLICT', 'Email already registered', 409);
 
     const userId = randomUUID();
     const orgId = randomUUID();
@@ -132,13 +133,13 @@ export async function registerAuthRoutes(app: FastifyInstance, deps: Deps) {
       id: membershipId,
       orgId,
       userId,
-      role: "admin",
+      role: 'admin',
     });
 
     await deps.audit.log(ctx, {
       actorUserId: userId,
-      action: "AUTH_REGISTER",
-      entityType: "user",
+      action: 'AUTH_REGISTER',
+      entityType: 'user',
       entityId: userId,
       payload: { email: body.email, orgId },
     });
@@ -163,22 +164,25 @@ export async function registerAuthRoutes(app: FastifyInstance, deps: Deps) {
     };
   });
 
-  app.post("/auth/login", async (req) => {
-    const ctx: RequestContext = (req).ctx as RequestContext;
-    const body = LoginSchema.parse((req).body);
+  app.post('/auth/login', async (req) => {
+    const ctx: RequestContext = req.ctx as RequestContext;
+    const body = LoginSchema.parse(req.body);
 
     const user = await deps.authRepo.findUserByEmail(body.email);
-    if (!user) throw new AppError("UNAUTHORIZED", "Invalid credentials", 401);
+    if (!user) throw new AppError('UNAUTHORIZED', 'Invalid credentials', 401);
     if (!user.passwordHash)
-      throw new AppError("UNAUTHORIZED", "Invalid credentials", 401);
+      throw new AppError('UNAUTHORIZED', 'Invalid credentials', 401);
 
     const ok = await verifyPassword(user.passwordHash, body.password);
-    if (!ok) throw new AppError("UNAUTHORIZED", "Invalid credentials", 401);
+    if (!ok) throw new AppError('UNAUTHORIZED', 'Invalid credentials', 401);
 
     const role = await deps.authRepo.getMembership(body.orgId, user.id);
-    if (!role) throw new AppError("FORBIDDEN", "No membership in org", 403);
+    if (!role) throw new AppError('FORBIDDEN', 'No membership in org', 403);
 
-    const accessToken = await signAccessToken({ sub: user.id, orgId: body.orgId });
+    const accessToken = await signAccessToken({
+      sub: user.id,
+      orgId: body.orgId,
+    });
     const refresh = await signRefreshToken(user.id);
 
     await deps.authRepo.upsertRefreshToken({
@@ -191,8 +195,8 @@ export async function registerAuthRoutes(app: FastifyInstance, deps: Deps) {
 
     await deps.audit.log(ctx, {
       actorUserId: user.id,
-      action: "AUTH_LOGIN",
-      entityType: "user",
+      action: 'AUTH_LOGIN',
+      entityType: 'user',
       entityId: user.id,
       payload: { orgId: body.orgId },
     });
@@ -200,25 +204,25 @@ export async function registerAuthRoutes(app: FastifyInstance, deps: Deps) {
     return { accessToken, refreshToken: refresh.token };
   });
 
-  app.post("/auth/refresh", async (req) => {
-    const ctx: RequestContext = (req).ctx as RequestContext;
-    const body = RefreshSchema.parse((req).body);
+  app.post('/auth/refresh', async (req) => {
+    const ctx: RequestContext = req.ctx as RequestContext;
+    const body = RefreshSchema.parse(req.body);
 
     const parsed = await verifyRefreshToken(body.refreshToken).catch(() => {
-      throw new AppError("UNAUTHORIZED", "Invalid refresh token", 401);
+      throw new AppError('UNAUTHORIZED', 'Invalid refresh token', 401);
     });
 
     const row = await deps.authRepo.findValidRefreshToken(parsed.jti);
     if (!row)
-      throw new AppError("UNAUTHORIZED", "Refresh token revoked/unknown", 401);
+      throw new AppError('UNAUTHORIZED', 'Refresh token revoked/unknown', 401);
 
     const gotHash = hashRefreshToken(body.refreshToken);
     if (!safeEqual(row.token_hash, gotHash)) {
-      throw new AppError("UNAUTHORIZED", "Refresh token mismatch", 401);
+      throw new AppError('UNAUTHORIZED', 'Refresh token mismatch', 401);
     }
 
     if (!row.org_id) {
-      throw new AppError("INTERNAL", "Refresh token missing org context", 500);
+      throw new AppError('INTERNAL', 'Refresh token missing org context', 500);
     }
 
     // rotation
@@ -230,27 +234,33 @@ export async function registerAuthRoutes(app: FastifyInstance, deps: Deps) {
         oldId: parsed.jti,
         newId: next.jti,
         userId: parsed.userId,
-        orgId: row.org_id, 
+        orgId: row.org_id,
         newTokenHash: nextHash,
         newExpiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 14),
       });
     } catch (e) {
       // deterministic errors
-      const msg = String(e ?? "");
-      if (msg.includes("REFRESH_REVOKED") || msg.includes("REFRESH_ALREADY_ROTATED")) {
-        throw new AppError("UNAUTHORIZED", "Refresh token already used", 401, {
-          hint: "re-login",
+      const msg = String(e ?? '');
+      if (
+        msg.includes('REFRESH_REVOKED') ||
+        msg.includes('REFRESH_ALREADY_ROTATED')
+      ) {
+        throw new AppError('UNAUTHORIZED', 'Refresh token already used', 401, {
+          hint: 're-login',
         });
       }
       throw e;
     }
 
-    const accessToken = await signAccessToken({ sub: parsed.userId, orgId: row.org_id });
+    const accessToken = await signAccessToken({
+      sub: parsed.userId,
+      orgId: row.org_id,
+    });
 
     await deps.audit.log(ctx, {
       actorUserId: parsed.userId,
-      action: "AUTH_REFRESH",
-      entityType: "refresh_token",
+      action: 'AUTH_REFRESH',
+      entityType: 'refresh_token',
       entityId: parsed.jti,
       payload: { orgId: row.org_id },
     });
@@ -258,20 +268,20 @@ export async function registerAuthRoutes(app: FastifyInstance, deps: Deps) {
     return { accessToken, refreshToken: next.token };
   });
 
-  app.post("/auth/logout", async (req) => {
-    const ctx: RequestContext = (req).ctx as RequestContext;
-    const body = LogoutSchema.parse((req).body);
+  app.post('/auth/logout', async (req) => {
+    const ctx: RequestContext = req.ctx as RequestContext;
+    const body = LogoutSchema.parse(req.body);
 
     const parsed = await verifyRefreshToken(body.refreshToken).catch(() => {
-      throw new AppError("UNAUTHORIZED", "Invalid refresh token", 401);
+      throw new AppError('UNAUTHORIZED', 'Invalid refresh token', 401);
     });
 
     await deps.authRepo.revokeRefreshToken(parsed.jti);
 
     await deps.audit.log(ctx, {
       actorUserId: parsed.userId,
-      action: "AUTH_LOGOUT",
-      entityType: "refresh_token",
+      action: 'AUTH_LOGOUT',
+      entityType: 'refresh_token',
       entityId: parsed.jti,
       payload: {},
     });

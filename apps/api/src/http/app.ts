@@ -15,43 +15,53 @@ import { buildPolicyEvalRepo } from '../modules/policy/policyEvaluation.repo';
 
 import { buildDecisionsRepo } from '../modules/decisions/decisions.repo';
 import { registerDecisionRoutes } from '../modules/decisions/decisions.routes';
+import cors from '@fastify/cors';
 
-
-type AuthRoutesDeps = Parameters<typeof registerAuthRoutes>[1]
-type MeRoutesDeps = Parameters<typeof registerMeRoutes>[1]
-
+type AuthRoutesDeps = Parameters<typeof registerAuthRoutes>[1];
+type MeRoutesDeps = Parameters<typeof registerMeRoutes>[1];
 
 export async function buildApp() {
-
   const app = Fastify({
     logger:
       env.NODE_ENV === 'development'
         ? {
             level: env.LOG_LEVEL,
-            transport: { target: 'pino-pretty', options: { colorize: true } }
+            transport: { target: 'pino-pretty', options: { colorize: true } },
           }
-        : { level: env.LOG_LEVEL }
+        : { level: env.LOG_LEVEL },
+  });
+  await app.register(cors, {
+    origin: (origin, cb) => {
+      // autorise aussi curl / server-to-server (origin undefined)
+      if (!origin) return cb(null, true);
+
+      const allowed = ['http://localhost:3000', 'http://127.0.0.1:3000'];
+
+      cb(null, allowed.includes(origin));
+    },
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   });
 
   // --- deps (DI minimal)
-  const sql = createSql()
-const redis = new Redis(env.REDIS_URL, { maxRetriesPerRequest: 2 })
+  const sql = createSql();
+  const redis = new Redis(env.REDIS_URL, { maxRetriesPerRequest: 2 });
 
-const auditRepo = buildAuditRepo(sql)
-const audit = buildAuditService(auditRepo)
+  const auditRepo = buildAuditRepo(sql);
+  const audit = buildAuditService(auditRepo);
 
+  const policyEvalRepo = buildPolicyEvalRepo(
+    sql,
+  ) as unknown as MeRoutesDeps['policyEvalRepo'];
 
-const policyEvalRepo = buildPolicyEvalRepo(sql) as unknown as MeRoutesDeps['policyEvalRepo']
+  const authRepoBase = buildAuthRepo(sql);
 
-const authRepoBase = buildAuthRepo(sql)
+  const authRepo: AuthRoutesDeps['authRepo'] = Object.assign({
+    ...(authRepoBase as unknown as Record<string, unknown>),
+    async findUserByEmail(email: string) {
+      console.log('[authRepo.findUserByEmail OVERRIDE]', email);
 
-
-const authRepo: AuthRoutesDeps['authRepo'] = Object.assign({
-  ...(authRepoBase as unknown as Record<string, unknown>),
- async findUserByEmail(email: string) {
-    console.log("[authRepo.findUserByEmail OVERRIDE]", email);
-
-    const rows = await (sql)`
+      const rows = await sql`
       SELECT
         u.id            AS "id",
         u.email         AS "email",
@@ -66,61 +76,66 @@ const authRepo: AuthRoutesDeps['authRepo'] = Object.assign({
       LIMIT 1
     `;
 
-    return rows[0] ?? null;
-  },
+      return rows[0] ?? null;
+    },
 
+    async createUser() {
+      throw new Error('createUser not implemented in buildAuthRepo');
+    },
+    async createOrg() {
+      throw new Error('createOrg not implemented in buildAuthRepo');
+    },
+    async addMembership() {
+      throw new Error('addMembership not implemented in buildAuthRepo');
+    },
+  });
 
-  async createUser() {
-    throw new Error('createUser not implemented in buildAuthRepo')
-  },
-  async createOrg() {
-    throw new Error('createOrg not implemented in buildAuthRepo')
-  },
-  async addMembership() {
-    throw new Error('addMembership not implemented in buildAuthRepo')
-  },
-})
+  const decisionsRepo = buildDecisionsRepo(sql);
 
-const decisionsRepo = buildDecisionsRepo(sql);
-
-app.register(async (a) =>
-  registerDecisionRoutes(a, { decisionsRepo, authRepo, policyEvalRepo, audit })
-);
-
+  app.register(async (a) =>
+    registerDecisionRoutes(a, {
+      decisionsRepo,
+      authRepo,
+      policyEvalRepo,
+      audit,
+    }),
+  );
 
   // --- request context + correlation
- app.addHook('onRequest', async (req, reply) => {
-  const ctx = buildRequestContext(req.headers);
-  req.ctx = ctx;
+  app.addHook('onRequest', async (req, reply) => {
+    const ctx = buildRequestContext(req.headers);
+    req.ctx = ctx;
 
-  reply.header('x-correlation-id', ctx.correlationId);
+    reply.header('x-correlation-id', ctx.correlationId);
 
-  req.log = req.log.child({
-    requestId: ctx.requestId,
-    correlationId: ctx.correlationId,
+    req.log = req.log.child({
+      requestId: ctx.requestId,
+      correlationId: ctx.correlationId,
+    });
   });
-});
 
   // --- errors
   app.setErrorHandler((err, req, reply) => {
-    const e = err instanceof AppError ? err : new AppError('INTERNAL', 'Internal error', 500);
+    const e =
+      err instanceof AppError
+        ? err
+        : new AppError('INTERNAL', 'Internal error', 500);
     req.log.error({ err, code: e.code }, 'request failed');
     reply.status(e.status).send({
-      error: { code: e.code, message: e.message, meta: e.meta ?? null }
+      error: { code: e.code, message: e.message, meta: e.meta ?? null },
     });
   });
 
   // --- routes
   registerHealthRoutes(app, { sql, redis });
-  app.register(async (a) => registerAuthRoutes(a, { authRepo, audit }))
+  app.register(async (a) => registerAuthRoutes(a, { authRepo, audit }));
 
-app.register(async (a) =>
-  registerMeRoutes(a, {
-    getRole: (orgId, userId) => authRepoBase.getMembership(orgId, userId),
-    policyEvalRepo,
-  })
-)
-
+  app.register(async (a) =>
+    registerMeRoutes(a, {
+      getRole: (orgId, userId) => authRepoBase.getMembership(orgId, userId),
+      policyEvalRepo,
+    }),
+  );
 
   // --- shutdown
   app.addHook('onClose', async () => {
@@ -130,4 +145,3 @@ app.register(async (a) =>
 
   return app;
 }
-

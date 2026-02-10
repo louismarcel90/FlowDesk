@@ -3,8 +3,9 @@ import type { FastifyRequest } from 'fastify';
 import { env } from './config/env';
 import { buildRequestContext } from './core/request-context';
 import { AppError } from './core/errors';
+import cors from '@fastify/cors';
 
-export function buildApp() {
+export async function buildApp() {
   const app = Fastify({
     logger: {
       level: env.LOG_LEVEL,
@@ -13,6 +14,19 @@ export function buildApp() {
           ? { target: 'pino-pretty', options: { colorize: true } }
           : undefined,
     },
+  });
+
+  await app.register(cors, {
+    origin: (origin, cb) => {
+      // autorise aussi curl / server-to-server (origin undefined)
+      if (!origin) return cb(null, true);
+
+      const allowed = ['http://localhost:3000', 'http://127.0.0.1:3000'];
+
+      cb(null, allowed.includes(origin));
+    },
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   });
 
   app.addHook('onRequest', async (req: FastifyRequest) => {

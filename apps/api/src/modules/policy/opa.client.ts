@@ -12,7 +12,7 @@ export async function evaluate(input: OpaInput): Promise<OpaDecision> {
   const res = await fetch(`${env.OPA_URL}/v1/data/flowdesk/authz`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ input })
+    body: JSON.stringify({ input }),
   });
 
   if (!res.ok) {

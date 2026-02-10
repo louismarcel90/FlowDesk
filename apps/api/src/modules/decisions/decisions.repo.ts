@@ -3,7 +3,10 @@ import {
   DecisionStatus as DecisionStatusSchema,
   DecisionVersionPayload as DecisionVersionPayloadSchema,
 } from './decisions.schemas';
-import type { DecisionStatus, DecisionVersionPayload } from './decisions.schemas';
+import type {
+  DecisionStatus,
+  DecisionVersionPayload,
+} from './decisions.schemas';
 
 export type Decision = {
   id: string;
@@ -64,6 +67,7 @@ type DbDecisionVersionRow = {
   decision_id: string;
   version: number;
   created_by: string;
+  created_at: string;
   context: unknown;
   options: unknown;
   tradeoffs: unknown;
@@ -137,12 +141,17 @@ export function buildDecisionsRepo(sql: Sql) {
         id: r.id,
         title: r.title,
         status: DecisionStatusSchema.parse(r.status),
-        createdAt: r.created_at,
-        approvedAt: r.approved_at,
+        createdAt: r.created_at.toISOString() as unknown as Date,
+        approvedAt: r.approved_at
+          ? (r.approved_at.toISOString() as unknown as Date)
+          : null,
       }));
     },
 
-    async getDecision(decisionId: string, orgId: string): Promise<Decision | null> {
+    async getDecision(
+      decisionId: string,
+      orgId: string,
+    ): Promise<Decision | null> {
       const rows = await sql<DbDecisionRow[]>`
         select *
         from decisions
@@ -158,9 +167,11 @@ export function buildDecisionsRepo(sql: Sql) {
         title: r.title,
         status: DecisionStatusSchema.parse(r.status),
         createdBy: r.created_by,
-        createdAt: r.created_at,
+        createdAt: r.created_at.toISOString() as unknown as Date,
         approvedBy: r.approved_by,
-        approvedAt: r.approved_at,
+        approvedAt: r.approved_at
+          ? (r.approved_at.toISOString() as unknown as Date)
+          : null,
       };
     },
 
@@ -187,6 +198,7 @@ export function buildDecisionsRepo(sql: Sql) {
           decisionId: r.decision_id,
           version: r.version,
           createdBy: r.created_by,
+          createdAt: new Date(r.created_at).toISOString() as unknown as Date,
           payload,
         };
       });
@@ -216,7 +228,7 @@ export function buildDecisionsRepo(sql: Sql) {
         id: r.id,
         decisionId: r.decision_id,
         createdBy: r.created_by,
-        createdAt: r.created_at,
+        createdAt: r.created_at.toISOString() as unknown as Date,
         body: r.body,
       }));
     },

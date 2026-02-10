@@ -25,6 +25,6 @@ export function buildPolicyEvalRepo(sql: Sql) {
           (${row.id}, ${row.occurredAt}, ${row.userId ?? null}, ${row.orgId ?? null}, ${row.action}, ${row.resourceType}, ${row.resourceId},
            ${row.allow}, ${row.reason ?? null}, ${row.rule ?? null}, ${row.correlationId}, ${sql.json(row.input)}, ${sql.json(row.result)})
       `;
-    }
+    },
   };
 }

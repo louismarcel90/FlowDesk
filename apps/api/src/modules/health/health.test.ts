@@ -9,7 +9,6 @@ describe('health', () => {
   });
 });
 
-
 describe('ready', () => {
   it('GET /ready returns ok', async () => {
     const app = await buildApp();

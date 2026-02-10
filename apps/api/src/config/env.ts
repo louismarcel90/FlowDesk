@@ -15,12 +15,11 @@ const EnvSchema = z.object({
     .default('postgresql://flowdesk:flowdesk@localhost:5432/flowdesk'),
   REDIS_URL: z.string().default('redis://localhost:6379'),
   JWT_ISSUER: z.string().default('flowdesk'),
-JWT_AUDIENCE: z.string().default('flowdesk-web'),
-JWT_ACCESS_SECRET: z.string().min(16),
-JWT_REFRESH_SECRET: z.string().min(16),
-JWT_ACCESS_TTL_SECONDS: z.coerce.number().default(900),
-JWT_REFRESH_TTL_SECONDS: z.coerce.number().default(1209600),
-
+  JWT_AUDIENCE: z.string().default('flowdesk-web'),
+  JWT_ACCESS_SECRET: z.string().min(16),
+  JWT_REFRESH_SECRET: z.string().min(16),
+  JWT_ACCESS_TTL_SECONDS: z.coerce.number().default(900),
+  JWT_REFRESH_TTL_SECONDS: z.coerce.number().default(1209600),
 });
 
 export const env = EnvSchema.parse(process.env);

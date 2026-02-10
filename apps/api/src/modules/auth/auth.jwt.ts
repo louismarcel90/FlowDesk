@@ -7,7 +7,7 @@ function textKey(secret: string) {
 }
 
 export type AccessClaims = {
-  sub: string;   // userId
+  sub: string; // userId
   orgId: string; // current org
 };
 
@@ -44,7 +44,7 @@ export async function signRefreshToken(userId: string) {
 export async function verifyAccessToken(token: string) {
   const res = await jwtVerify(token, textKey(env.JWT_ACCESS_SECRET), {
     issuer: env.JWT_ISSUER,
-    audience: env.JWT_AUDIENCE
+    audience: env.JWT_AUDIENCE,
   });
 
   const sub = res.payload.sub;
@@ -57,7 +57,7 @@ export async function verifyAccessToken(token: string) {
 export async function verifyRefreshToken(token: string) {
   const res = await jwtVerify(token, textKey(env.JWT_REFRESH_SECRET), {
     issuer: env.JWT_ISSUER,
-    audience: env.JWT_AUDIENCE
+    audience: env.JWT_AUDIENCE,
   });
   const sub = res.payload.sub;
   const jti = res.payload.jti;

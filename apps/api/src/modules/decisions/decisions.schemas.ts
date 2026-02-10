@@ -1,6 +1,6 @@
-import { z } from "zod";
+import { z } from 'zod';
 
-export const DecisionStatus = z.enum(["draft", "approved", "deprecated"]);
+export const DecisionStatus = z.enum(['draft', 'approved', 'deprecated']);
 
 const AnyRecord = z.record(z.string(), z.any());
 
@@ -12,6 +12,9 @@ export const DecisionVersionPayload = z.object({
   risks: z.array(AnyRecord).default([]),
   outcome: AnyRecord.default({}),
 });
+
+export type DecisionVersionPayload = z.infer<typeof DecisionVersionPayload>;
+export type DecisionStatus = z.infer<typeof DecisionStatus>;
 
 export const CreateDecisionSchema = z.object({
   title: z.string().min(3),
