@@ -30,6 +30,13 @@ required_rank := {
   "decision.update": 2,
   "decision.comment": 1,
   "decision.approve": 3,
+
+  "initiative.read": 1,
+  "initiative.create": 2,
+  "metric.read": 1,
+  "metric.create": 2,
+  "metric.snapshot.create": 2,
+  "decision.link": 2,
 }
 
 org_match(i) {

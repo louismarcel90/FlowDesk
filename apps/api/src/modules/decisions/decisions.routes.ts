@@ -1,25 +1,25 @@
 import type { FastifyInstance } from 'fastify';
 import { randomUUID } from 'node:crypto';
-
 import type { RequestContext } from '../../core/request-context';
 import { AppError } from '../../core/errors';
 import { authenticate } from '../auth/auth.middleware';
 import { authorize } from '../policy/authorize';
+import { Role } from '../auth/auth.types';
 
 import {
   CreateDecisionSchema,
   NewVersionSchema,
   AddCommentSchema,
 } from './decisions.schemas';
+
 import type {
   Decision,
   DecisionListItem,
   DecisionVersion,
   DecisionComment,
 } from './decisions.repo';
-import { Role } from '../auth/auth.types';
 
-// Ce que ton middleware authenticate ajoute sur req
+
 type Principal = {
   orgId: string;
   userId: string;
@@ -38,6 +38,13 @@ type DecisionsRepo = {
     title: string;
     createdBy: string;
   }): Promise<void>;
+
+  approveDecision(input: {
+    decisionId: string;
+    approvedBy: string;
+    orgId: string;
+  }): Promise<void>;
+
   createVersion(input: {
     id: string;
     decisionId: string;
@@ -48,11 +55,6 @@ type DecisionsRepo = {
 
   nextVersionNumber(decisionId: string): Promise<number>;
 
-  approveDecision(input: {
-    decisionId: string;
-    approvedBy: string;
-    orgId: string;
-  }): Promise<void>;
   addComment(input: {
     id: string;
     decisionId: string;
@@ -61,11 +63,28 @@ type DecisionsRepo = {
   }): Promise<void>;
 };
 
+type ImpactRepo = {
+  listLinksForDecision(decisionId: string): Promise<unknown[]>; 
+};
+
+type AuthRepo = {
+  getMembership(orgId: string, userId: string): Promise<Role | null>;
+};
+
+type PolicyEvalRepo = {
+  insert(row: unknown): Promise<void>; 
+};
+
+type Audit = {
+  log(ctx: RequestContext, e: unknown): Promise<void>;
+};
+
 type Deps = {
   decisionsRepo: DecisionsRepo;
-  authRepo: { getMembership(orgId: string, userId: string): Promise<unknown> };
-  policyEvalRepo: { insert(row: unknown): Promise<void> };
-  audit: { log(ctx: RequestContext, e: unknown): Promise<void> };
+  impactRepo: ImpactRepo;
+  authRepo: AuthRepo;
+  policyEvalRepo: PolicyEvalRepo;
+  audit: Audit;
 };
 
 function getCtx(req: unknown): RequestContext {
@@ -221,8 +240,10 @@ export async function registerDecisionRoutes(app: FastifyInstance, deps: Deps) {
 
       const versions = await deps.decisionsRepo.getVersions(id);
       const comments = await deps.decisionsRepo.getComments(id);
+      const links = await deps.impactRepo.listLinksForDecision(id);
 
-      return { decision, versions, comments };
+
+      return { decision, versions, comments, links };
     },
   );
 

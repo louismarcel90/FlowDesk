@@ -17,6 +17,9 @@ import { buildDecisionsRepo } from '../modules/decisions/decisions.repo';
 import { registerDecisionRoutes } from '../modules/decisions/decisions.routes';
 import cors from '@fastify/cors';
 
+import { buildImpactRepo } from '../modules/impact/impact.repo';
+
+
 type AuthRoutesDeps = Parameters<typeof registerAuthRoutes>[1];
 type MeRoutesDeps = Parameters<typeof registerMeRoutes>[1];
 
@@ -49,7 +52,7 @@ export async function buildApp() {
 
   const auditRepo = buildAuditRepo(sql);
   const audit = buildAuditService(auditRepo);
-
+  const impactRepo = buildImpactRepo(sql)
   const policyEvalRepo = buildPolicyEvalRepo(
     sql,
   ) as unknown as MeRoutesDeps['policyEvalRepo'];
@@ -94,12 +97,15 @@ export async function buildApp() {
 
   app.register(async (a) =>
     registerDecisionRoutes(a, {
+      impactRepo,
       decisionsRepo,
       authRepo,
       policyEvalRepo,
-      audit,
+      audit,     
     }),
   );
+
+ 
 
   // --- request context + correlation
   app.addHook('onRequest', async (req, reply) => {
