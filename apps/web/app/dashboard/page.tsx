@@ -1,0 +1,55 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { apiFetch } from '../../lib/api';
+
+export default function DashboardPage() {
+  const [decisions, setDecisions] = useState<any[]>([]);
+  const [initiatives, setInitiatives] = useState<any[]>([]);
+  const [metrics, setMetrics] = useState<any[]>([]);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    Promise.all([apiFetch('/decisions'), apiFetch('/initiatives'), apiFetch('/metrics')])
+      .then(([d, i, m]) => {
+        setDecisions(d);
+        setInitiatives(i);
+        setMetrics(m);
+      })
+      .catch((e) => setError(String(e.message ?? e)));
+  }, []);
+
+  return (
+    <main style={{ display: 'grid', gap: 18 }}>
+      <h1>Dashboard</h1>
+      {error && <p style={{ color: 'crimson' }}>{error}</p>}
+
+      <section style={{ border: '1px solid #ddd', padding: 12, borderRadius: 8 }}>
+        <h2>Recent Decisions</h2>
+        <ul>
+          {decisions.slice(0, 8).map((d) => (
+            <li key={d.id}><a href={`/decisions/${d.id}`}>{d.title}</a> — {d.status}</li>
+          ))}
+        </ul>
+      </section>
+
+      <section style={{ border: '1px solid #ddd', padding: 12, borderRadius: 8 }}>
+        <h2>Initiatives</h2>
+        <ul>
+          {initiatives.slice(0, 8).map((x) => (
+            <li key={x.id}><a href={`/initiatives/${x.id}`}>{x.name}</a> — {x.status}</li>
+          ))}
+        </ul>
+      </section>
+
+      <section style={{ border: '1px solid #ddd', padding: 12, borderRadius: 8 }}>
+        <h2>Metrics</h2>
+        <ul>
+          {metrics.slice(0, 8).map((m) => (
+            <li key={m.id}>{m.name} ({m.unit}) — direction: {m.direction}</li>
+          ))}
+        </ul>
+      </section>
+    </main>
+  );
+}
