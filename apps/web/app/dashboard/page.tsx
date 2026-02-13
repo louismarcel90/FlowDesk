@@ -46,7 +46,7 @@ export default function DashboardPage() {
         <h2>Metrics</h2>
         <ul>
           {metrics.slice(0, 8).map((m) => (
-            <li key={m.id}>{m.name} ({m.unit}) — direction: {m.direction}</li>
+            <li key={m.id}><a href={`/metrics/${m.id}`}>{m.name} ({m.unit})</a> — direction: {m.direction}</li>
           ))}
         </ul>
       </section>

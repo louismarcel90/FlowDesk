@@ -3,7 +3,7 @@ version: '3.9'
 services:
   postgres:
     image: postgres:16
-    container_name: flowdesk_postgres
+    container_name: flowdesk-postgres
     environment:
       POSTGRES_USER: flowdesk
       POSTGRES_PASSWORD: flowdesk
@@ -20,7 +20,7 @@ services:
 
   redis:
     image: redis:7
-    container_name: flowdesk_redis
+    container_name: flowdesk-redis
     ports:
       - '6379:6379'
     healthcheck:
@@ -31,7 +31,7 @@ services:
 
   redpanda:
     image: redpandadata/redpanda:v24.1.9
-    container_name: flowdesk_redpanda
+    container_name: flowdesk-redpanda
     hostname: redpanda
     ports:
       - '9092:9092'
@@ -66,7 +66,7 @@ services:
 
   opa:
     image: openpolicyagent/opa:0.68.0
-    container_name: flowdesk_opa
+    container_name: flowdesk-opa
     command:
       - run
       - --server
@@ -87,6 +87,13 @@ services:
       interval: 10s
       timeout: 5s
       retries: 30
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: flowdesk-mailpit
+    ports:
+      - "8025:8025" # UI
+      - "1025:1025" # SMTP
 
 volumes:
   pgdata:

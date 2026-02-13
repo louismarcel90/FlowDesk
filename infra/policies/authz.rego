@@ -7,13 +7,24 @@ allow_for(i) {
   role_rank[i.principal.role] >= required_rank[i.action]
 }
 
+# Public function: reason_for(i) returns a string
 reason_for(i) = msg {
-  allow_for(i)
-  msg := "ALLOW"
+  not org_match(i)
+  msg := "DENY: org mismatch"
 } else = msg {
-  msg := "DENY: insufficient role or org mismatch"
+  not required_rank[i.action]
+  msg := sprintf("DENY: unknown action %v", [i.action])
+} else = msg {
+  not role_rank[i.principal.role]
+  msg := sprintf("DENY: unknown role %v", [i.principal.role])
+} else = msg {
+  role_rank[i.principal.role] < required_rank[i.action]
+  msg := "DENY: insufficient role"
+} else = msg {
+  msg := "ALLOW"
 }
 
+# ---- Role hierarchy
 role_rank := {
   "viewer": 1,
   "editor": 2,
@@ -21,6 +32,7 @@ role_rank := {
   "admin": 4,
 }
 
+# ---- Action -> minimum required role rank
 required_rank := {
   "me.read": 1,
   "admin.policies.read": 4,
@@ -33,12 +45,15 @@ required_rank := {
 
   "initiative.read": 1,
   "initiative.create": 2,
+
   "metric.read": 1,
   "metric.create": 2,
   "metric.snapshot.create": 2,
+
   "decision.link": 2,
 }
 
+# ---- Org matching
 org_match(i) {
   not i.resource.orgId
 }

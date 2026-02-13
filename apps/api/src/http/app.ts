@@ -15,10 +15,10 @@ import { buildPolicyEvalRepo } from '../modules/policy/policyEvaluation.repo';
 
 import { buildDecisionsRepo } from '../modules/decisions/decisions.repo';
 import { registerDecisionRoutes } from '../modules/decisions/decisions.routes';
-import cors from '@fastify/cors';
-
+import { registerImpactRoutes } from '../modules/impact/impact.routes';
 import { buildImpactRepo } from '../modules/impact/impact.repo';
 
+import cors from '@fastify/cors';
 
 type AuthRoutesDeps = Parameters<typeof registerAuthRoutes>[1];
 type MeRoutesDeps = Parameters<typeof registerMeRoutes>[1];
@@ -95,7 +95,7 @@ export async function buildApp() {
 
   const decisionsRepo = buildDecisionsRepo(sql);
 
-  app.register(async (a) =>
+  await app.register(async (a) =>
     registerDecisionRoutes(a, {
       impactRepo,
       decisionsRepo,
@@ -104,6 +104,16 @@ export async function buildApp() {
       audit,     
     }),
   );
+
+  await app.register(async (a) =>
+    registerImpactRoutes(a, {
+      impactRepo,
+      authRepo,
+      policyEvalRepo,
+      audit,
+    }),
+  );
+ 
 
  
 

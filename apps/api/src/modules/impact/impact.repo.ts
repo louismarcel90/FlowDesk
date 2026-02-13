@@ -9,6 +9,7 @@ export type Initiative = {
   name: string;
   description: string;
   status: InitiativeStatus;
+  createdBy: string;
   createdAt: string; 
 };
 
@@ -18,6 +19,7 @@ type DbInitiativeRow = {
   name: string;
   description: string;
   status: string;
+  createdBy: string;
   createdAt: string; 
 };
 
@@ -83,6 +85,12 @@ export type DecisionListItem = {
   createdAt: string; 
 };
 
+function toIsoOrNull(v: unknown): string | null {
+  if (v === null || v === undefined || v === "") return null;
+  const d = v instanceof Date ? v: typeof v === "number" ? new Date(v): new Date(String(v));
+  return Number.isNaN(d.getTime()) ? null : d.toISOString();
+}
+
 
 
 export function buildImpactRepo(sql: Sql) {
@@ -95,21 +103,29 @@ export function buildImpactRepo(sql: Sql) {
     },
 
     async listInitiatives(orgId: string): Promise<Initiative[]> {
-  const rows = await sql<DbInitiativeRow[]>`
-    select id, org_id, name, description, status, created_at
-    from initiatives
-    where org_id = ${orgId}
-    order by created_at desc
-    limit 100
-  `;
+    const rows = await sql<DbInitiativeRow[]>`
+      select 
+        id, 
+        org_id, 
+        name, 
+        description, 
+        status, 
+        created_by as "createdBy", 
+        created_at  as "createdAt"
+      from initiatives
+      where org_id = ${orgId}
+      order by created_at DESC NULLS LAST
+      limit 100
+    `;
 
-  return rows.map((r) => ({
+  return rows.map((r): Initiative => ({
     id: r.id,
     orgId: r.org_id,
     name: r.name,
-    description: r.description,
+    description: r.description ?? null,
     status: r.status as InitiativeStatus,
-    createdAt: new Date(r.createdAt).toISOString(),
+    createdBy: r.createdBy ?? null,
+    createdAt: toIsoOrNull(r.createdAt) ?? "",
   }));
 },
 
@@ -130,7 +146,8 @@ export function buildImpactRepo(sql: Sql) {
     name: r.name,
     description: r.description,
     status: r.status as InitiativeStatus,
-    createdAt: new Date(r.createdAt).toISOString(),
+    createdBy: r.createdBy,
+    createdAt: toIsoOrNull(r.createdAt) ?? "",
   };
 },
 
@@ -156,7 +173,7 @@ export function buildImpactRepo(sql: Sql) {
     name: r.name,
     unit: r.unit,
     direction: r.direction,
-    createdAt: new Date(r.createdAt).toISOString(),
+    createdAt: toIsoOrNull(r.createdAt) ?? "",
   }));
 },
 
@@ -174,7 +191,7 @@ export function buildImpactRepo(sql: Sql) {
     name: r.name,
     unit: r.unit,
     direction: r.direction,
-    createdAt: new Date(r.createdAt).toISOString(),
+    createdAt: toIsoOrNull(r.createdAt) ?? "",
   }));
 },
 
@@ -199,7 +216,7 @@ export function buildImpactRepo(sql: Sql) {
     occurredAt: new Date(r.occurred_at).toISOString(),
     value: r.value,
     source: r.source,
-    createdAt: new Date(r.createdAt).toISOString(),
+    createdAt: toIsoOrNull(r.createdAt) ?? "",
   }));
 },
 
@@ -228,7 +245,7 @@ export function buildImpactRepo(sql: Sql) {
     id: r.id,
     initiativeId: r.initiative_id,
     initiativeName: r.initiative_name,
-    createdAt: new Date(r.createdAt).toISOString(),
+    createdAt: toIsoOrNull(r.createdAt) ?? "",
   }));
 },
 
@@ -245,7 +262,7 @@ export function buildImpactRepo(sql: Sql) {
     id: r.id,
     title: r.title,
     status: r.status,
-    createdAt: new Date(r.createdAt).toISOString(),
+    createdAt: toIsoOrNull(r.createdAt) ?? "",
   }));
 }
   };

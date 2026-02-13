@@ -5,31 +5,46 @@ import { authenticate } from '../auth/auth.middleware';
 import { authorize } from '../policy/authorize';
 import { AppError } from '../../core/errors';
 import { buildImpactRepo } from './impact.repo';
+import { buildAuditService } from '../audit/audit.service';
 import {
   CreateInitiativeSchema,
   CreateMetricSchema,
   CreateMetricSnapshotSchema,
   LinkDecisionSchema
 } from './impact.schemas';
+import { registerMeRoutes } from '../auth/me.routes';
+import { registerAuthRoutes } from '../auth/auth.routes';
 import { Role } from '../auth/auth.types';
+
+
+type AuthRoutesDeps = Parameters<typeof registerAuthRoutes>[1];
+type MeRoutesDeps = Parameters<typeof registerMeRoutes>[1];
 
 
 type Deps = {
   impactRepo: ReturnType<typeof buildImpactRepo>;
-  authRepo: { getMembership(orgId: string, userId: string): Promise<{ role: Role | null } | null> };
-  policyEvalRepo: { insert: (row: unknown) => Promise<void> };
-  audit: { log: (ctx: RequestContext, e: unknown) => Promise<void> };
+  authRepo: AuthRoutesDeps['authRepo'];
+  policyEvalRepo: MeRoutesDeps['policyEvalRepo'];
+  audit: ReturnType<typeof buildAuditService>;
 };
 
 export async function registerImpactRoutes(app: FastifyInstance, deps: Deps) {
   const auth = authenticate({
   getRole: async (o, u) => {
-    const membership = await deps.authRepo.getMembership(o, u);
-    return membership?.role ?? null;
+    const membershipOrRole = await deps.authRepo.getMembership(o, u);
+
+    if (!membershipOrRole) return null;
+
+    if (typeof membershipOrRole === 'object' && 'role' in membershipOrRole) {
+      const r = (membershipOrRole as { role?: Role | null }).role ?? null;
+      return r;
+    }
+
+    return membershipOrRole as Role;
   },
 });
 
-
+// INITIATIVES
   app.get('/initiatives', { preHandler: [auth] }, async (req) => {
     const ctx = (req).ctx as RequestContext;
     const principal = (req).principal;
@@ -98,6 +113,7 @@ export async function registerImpactRoutes(app: FastifyInstance, deps: Deps) {
     return { initiative, decisions, metrics };
   });
 
+  // METRICS
   app.get('/metrics', { preHandler: [auth] }, async (req) => {
     const ctx = (req).ctx as RequestContext;
     const principal = (req).principal;
@@ -127,7 +143,7 @@ export async function registerImpactRoutes(app: FastifyInstance, deps: Deps) {
     const id = randomUUID();
     await deps.impactRepo.createMetric({
       id,
-      orgId: principal.orgId,
+      orgId: principal.orgId, 
       initiativeId: body.initiativeId,
       name: body.name,
       unit: body.unit,
@@ -145,6 +161,7 @@ export async function registerImpactRoutes(app: FastifyInstance, deps: Deps) {
 
     return { id };
   });
+
 
   app.post<{ Params: { id: string }}>('/metrics/:id/snapshots', { preHandler: [auth] }, async (req) => {
     const ctx = (req).ctx as RequestContext;

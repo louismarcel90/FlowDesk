@@ -81,10 +81,10 @@ type Audit = {
 
 type Deps = {
   decisionsRepo: DecisionsRepo;
-  impactRepo: ImpactRepo;
   authRepo: AuthRepo;
   policyEvalRepo: PolicyEvalRepo;
   audit: Audit;
+  impactRepo: ImpactRepo
 };
 
 function getCtx(req: unknown): RequestContext {
