@@ -18,7 +18,10 @@
     "api:dev": "pnpm -C apps/api dev",
     "api:db:migrate": "pnpm -C apps/api db:migrate",
     "policy:test": "docker run --rm -v \"%cd%:/repo\" openpolicyagent/opa:0.68.0 test /repo/apps/policy/policies /repo/infra/policies -v",
-    "policy:push": "pnpm -C apps/policy push -- /repo/apps/policy/policies /repo/infra/policies"
+    "policy:push": "pnpm -C apps/policy push -- /repo/apps/policy/policies /repo/infra/policies",
+    "workers:publisher": "pnpm -C apps/workers publisher",
+  "workers:orchestrator": "pnpm -C apps/workers orchestrator",
+  "workers:delivery:email": "pnpm -C apps/workers delivery:email"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^8.54.0",

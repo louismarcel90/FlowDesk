@@ -5,6 +5,8 @@ import { AppError } from '../../core/errors';
 import { authenticate } from '../auth/auth.middleware';
 import { authorize } from '../policy/authorize';
 import { Role } from '../auth/auth.types';
+import { OutboxRepo } from '../outbox/outbox.repo';
+
 
 import {
   CreateDecisionSchema,
@@ -84,7 +86,8 @@ type Deps = {
   authRepo: AuthRepo;
   policyEvalRepo: PolicyEvalRepo;
   audit: Audit;
-  impactRepo: ImpactRepo
+  impactRepo: ImpactRepo;
+  outboxRepo: OutboxRepo;
 };
 
 function getCtx(req: unknown): RequestContext {
@@ -352,6 +355,20 @@ export async function registerDecisionRoutes(app: FastifyInstance, deps: Deps) {
         approvedBy: principal.userId,
         orgId: principal.orgId,
       });
+
+      await deps.outboxRepo.enqueue({
+        id: randomUUID(),
+        aggregateType: 'decision',
+        aggregateId: id,
+        eventType: 'decision.approved',
+        correlationId: ctx.correlationId,
+        payload: {
+        decisionId: id,
+        orgId: principal.orgId,
+        approvedBy: principal.userId
+    }
+  });
+
 
       await deps.audit.log(ctx, {
         actorUserId: principal.userId,

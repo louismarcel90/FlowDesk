@@ -4,21 +4,23 @@ import { buildRequestContext } from '../core/request-context';
 import { AppError } from '../core/errors';
 import { createSql } from '../db/client';
 import Redis from 'ioredis';
-import { registerHealthRoutes } from '../modules/health/health.routes';
+import { buildAuditService } from '../modules/audit/audit.service';
 
-import { buildAuthRepo } from '../modules/auth/auth.repo';
+import { registerHealthRoutes } from '../modules/health/health.routes';
 import { registerAuthRoutes } from '../modules/auth/auth.routes';
 import { registerMeRoutes } from '../modules/auth/me.routes';
-import { buildAuditRepo } from '../modules/audit/audit.repo';
-import { buildAuditService } from '../modules/audit/audit.service';
-import { buildPolicyEvalRepo } from '../modules/policy/policyEvaluation.repo';
-
-import { buildDecisionsRepo } from '../modules/decisions/decisions.repo';
 import { registerDecisionRoutes } from '../modules/decisions/decisions.routes';
 import { registerImpactRoutes } from '../modules/impact/impact.routes';
+
 import { buildImpactRepo } from '../modules/impact/impact.repo';
+import { buildOutboxRepo } from '../modules/outbox/outbox.repo';
+import { buildDecisionsRepo } from '../modules/decisions/decisions.repo';
+import { buildAuditRepo } from '../modules/audit/audit.repo';
+import { buildAuthRepo } from '../modules/auth/auth.repo';
+import { buildPolicyEvalRepo } from '../modules/policy/policyEvaluation.repo';
 
 import cors from '@fastify/cors';
+
 
 type AuthRoutesDeps = Parameters<typeof registerAuthRoutes>[1];
 type MeRoutesDeps = Parameters<typeof registerMeRoutes>[1];
@@ -53,6 +55,9 @@ export async function buildApp() {
   const auditRepo = buildAuditRepo(sql);
   const audit = buildAuditService(auditRepo);
   const impactRepo = buildImpactRepo(sql)
+
+  const decisionsRepo = buildDecisionsRepo(sql);
+  const outboxRepo = buildOutboxRepo(sql);
   const policyEvalRepo = buildPolicyEvalRepo(
     sql,
   ) as unknown as MeRoutesDeps['policyEvalRepo'];
@@ -93,7 +98,7 @@ export async function buildApp() {
     },
   });
 
-  const decisionsRepo = buildDecisionsRepo(sql);
+
 
   await app.register(async (a) =>
     registerDecisionRoutes(a, {
@@ -101,7 +106,8 @@ export async function buildApp() {
       decisionsRepo,
       authRepo,
       policyEvalRepo,
-      audit,     
+      audit,
+      outboxRepo,
     }),
   );
 
