@@ -51,6 +51,10 @@ required_rank := {
   "metric.snapshot.create": 2,
 
   "decision.link": 2,
+
+  "notifications.read": 1,
+  "notifications.manage": 1,
+
 }
 
 # ---- Org matching

@@ -12,14 +12,26 @@ import {
   CreateDecisionSchema,
   NewVersionSchema,
   AddCommentSchema,
+  DecisionStatus,
 } from './decisions.schemas';
 
 import type {
-  Decision,
   DecisionListItem,
   DecisionVersion,
   DecisionComment,
 } from './decisions.repo';
+
+
+export type Decision = {
+  id: string;
+  orgId: string;
+  title: string;
+  status: DecisionStatus;
+  createdBy: string;
+  createdAt: Date;
+  approvedBy: string | null;
+  approvedAt: Date | null;
+};
 
 
 type Principal = {
@@ -367,7 +379,7 @@ export async function registerDecisionRoutes(app: FastifyInstance, deps: Deps) {
         orgId: principal.orgId,
         approvedBy: principal.userId
     }
-  });
+});
 
 
       await deps.audit.log(ctx, {

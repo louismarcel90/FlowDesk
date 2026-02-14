@@ -19,6 +19,11 @@ import { buildAuditRepo } from '../modules/audit/audit.repo';
 import { buildAuthRepo } from '../modules/auth/auth.repo';
 import { buildPolicyEvalRepo } from '../modules/policy/policyEvaluation.repo';
 
+import { buildInAppRepo } from '../modules/notifications/inapp.repo';
+import { registerInAppNotificationRoutes } from '../modules/notifications/inapp.routes';
+import { buildSseHub } from '../modules/notifications/sseHub';
+
+
 import cors from '@fastify/cors';
 
 
@@ -55,6 +60,9 @@ export async function buildApp() {
   const auditRepo = buildAuditRepo(sql);
   const audit = buildAuditService(auditRepo);
   const impactRepo = buildImpactRepo(sql)
+
+  const inAppRepo = buildInAppRepo(sql);
+  const sseHub = buildSseHub();
 
   const decisionsRepo = buildDecisionsRepo(sql);
   const outboxRepo = buildOutboxRepo(sql);
@@ -150,7 +158,9 @@ export async function buildApp() {
 
   // --- routes
   registerHealthRoutes(app, { sql, redis });
-  app.register(async (a) => registerAuthRoutes(a, { authRepo, audit }));
+  await app.register(async (a) => registerAuthRoutes(a, { authRepo, audit }));
+  await app.register(async (a) => registerInAppNotificationRoutes(a, { authRepo, policyEvalRepo, inAppRepo, sseHub })
+);
 
   app.register(async (a) =>
     registerMeRoutes(a, {
