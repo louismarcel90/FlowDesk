@@ -113,6 +113,19 @@ export async function runOrchestrator() {
           ]
         });
 
+        // in-app inbox item (facebook-style)
+        await sql`
+          insert into in_app_notifications
+            (id, org_id, user_id, type, title, body, entity_type, entity_id, source_event_id, correlation_id)
+          values
+             (${randomUUID()}, ${orgId}, ${m.user_id}, ${type},
+              ${'Decision approved'},
+              ${`A decision was approved (ID: ${payload.decisionId})`},
+              ${'decision'}, ${payload.decisionId},
+              ${eventId}, ${correlationId})
+              `;
+
+
         console.log(`[orchestrator] created notification ${notificationId} job ${jobId}`);
       }
     }
