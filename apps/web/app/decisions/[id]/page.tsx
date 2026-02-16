@@ -27,7 +27,11 @@ export default function DecisionDetailPage() {
 
   async function approve() {
     if (!decisionId) return;
-    await apiFetch(`/decisions/${decisionId}/approve`, { method: 'POST' });
+    await apiFetch(`/decisions/${decisionId}/approve`, {
+      method: 'POST',
+      body: JSON.stringify({}), 
+    
+    });
     const refreshed = await apiFetch(`/decisions/${decisionId}`);
     setData(refreshed);
   }

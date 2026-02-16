@@ -99,7 +99,6 @@ export function NotificationBell() {
 
   return (
     <a href="/notifications" style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
-      <span style={{ fontSize: 18 }}>🔔</span>
 
       {unread > 0 && (
         <span
@@ -120,8 +119,7 @@ export function NotificationBell() {
           {badge}
         </span>
       )}
-
-      <span style={{ marginLeft: 8, fontSize: 12, opacity: 0.65 }}>{live ? 'live' : 'poll'}</span>
+      <span style={{ marginLeft: 8, fontSize: 12, opacity: 0.65 }}>Notifications{live ? ' live 🔔' : ' poll🔔'}</span>
     </a>
   );
 }

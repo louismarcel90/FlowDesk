@@ -1,8 +1,7 @@
-package flowdesk.authz
+package flowdesk.apps_authz
 
 import data.flowdesk.authz_lib as lib
 
-# IMPORTANT: pas de "default allow" ici, sinon conflit avec infra/policies/authz_api.rego
 
 allow {
   lib.allow_for(input)

@@ -11,12 +11,17 @@ const InboxQuery = z.object({
   cursor: z.string().optional()
 });
 
-type inAppNotification = {
-  id: string;
+export type inAppNotification = {
+  id?: string;
   type: string;
+  title: string | null;
+  body: string | null;
+  entityType?: string | null;
+  entityId?: string | null;
   createdAt: string;
   readAt: Date | null;
 };
+
 
 export async function registerInAppNotificationRoutes(
   app: FastifyInstance,
@@ -68,78 +73,158 @@ export async function registerInAppNotificationRoutes(
     });
 
     const q = InboxQuery.parse(req.query);
-    const items = await deps.inAppRepo.listInbox(principal.userId, q.limit, q.cursor);
-    const nextCursor = items.length ? new Date(items[items.length - 1].createdAt).toISOString() : null;
-
+    const rows = await deps.inAppRepo.listInbox(principal.userId, q.limit, q.cursor);
+     const items = rows.map((r) => ({
+      id: r.id,
+      type: r.type,
+      title: r.title ?? null,
+      body: r.body ?? null,
+      entityType: r.entityType ?? null,
+      entityId: r.entityId ?? null,
+      createdAt: r.createdAt ?? new Date().toISOString(),
+      readAt: r.readAt ? r.readAt.toISOString() : null,
+  }));
+    const lastCreated = rows[rows.length - 1]?.createdAt;
+    const nextCursor = lastCreated ? new Date(lastCreated).toISOString() : null;
+    
     return { items, nextCursor };
   });
 
   // POST /notifications/:id/read
-  app.post<{Params:{id: string}}>('/notifications/:id/read', { preHandler: [auth] }, async (req) => {
+  app.post<{ Params: { id: string } }>('/notifications/:id/read', { preHandler: [auth] }, async (req, reply) => {
+  try {
     const ctx = (req).ctx as RequestContext;
-    const principal = (req).principal;
-    const id = req.params.id;
+    const principal = req.principal;
 
     await authorize({
       ctx,
       principal,
-      action: 'notifications.manage',
-      resource: { type: 'notification', id, orgId: principal.orgId },
-      policyEvalRepo: deps.policyEvalRepo
+      action: 'notifications.read',
+      resource: { type: 'notification', id:req.params.id, orgId: principal.orgId },
+      policyEvalRepo: deps.policyEvalRepo,
     });
 
-    await deps.inAppRepo.markRead(principal.userId, id);
+    await deps.inAppRepo.markRead(principal.userId, req.params.id);
     const count = await deps.inAppRepo.unreadCount(principal.userId);
 
     deps.sseHub.publish(principal.userId, { type: 'unread_count_updated', unreadCount: count });
 
     return { ok: true, unreadCount: count };
-  });
+  } catch (err) {
+    req.log.error({ err }, 'POST /notifications/:id/read failed');
+    return reply.code(500).send({ error: { message: err instanceof Error ? err.message : String (err)} });
+  }
+});
+
 
   // POST /notifications/read-all
-  app.post('/notifications/read-all', { preHandler: [auth] }, async (req) => {
-    const ctx = (req).ctx as RequestContext;
-    const principal = (req).principal;
+app.post('/notifications/read-all', { preHandler: [auth] }, async (req, reply) => {
+  try {
+    const ctx = req.ctx as RequestContext;
+    const principal = req.principal;
 
     await authorize({
       ctx,
       principal,
-      action: 'notifications.manage',
+      action: 'notifications.read',
       resource: { type: 'notification', id: '*', orgId: principal.orgId },
-      policyEvalRepo: deps.policyEvalRepo
+      policyEvalRepo: deps.policyEvalRepo,
     });
 
     await deps.inAppRepo.markAllRead(principal.userId);
 
-    deps.sseHub.publish(principal.userId, { type: 'unread_count_updated', unreadCount: 0 });
-
-    return { ok: true, unreadCount: 0 };
-  });
-
-  /**
-   * GET /notifications/stream (SSE)
-   * Auth: Bearer token (compatible via fetch streaming)
-   */
-  app.get('/notifications/stream', { preHandler: [auth] }, async (req, reply) => {
-    const principal = (req).principal;
-
-    reply.raw.writeHead(200, {
-      'content-type': 'text/event-stream',
-      'cache-control': 'no-cache, no-transform',
-      connection: 'keep-alive'
+    deps.sseHub.publish(principal.userId, {
+      type: 'unread_count_updated',
+      unreadCount: 0,
     });
 
-    const write = (data: string) => {
-      reply.raw.write(`data: ${data}\n\n`);
+    return { ok: true, unreadCount: 0 };
+  } catch (err) {
+    req.log.error({ err }, 'POST /notifications/read-all failed');
+    const message = err instanceof Error ? err.message : String(err);
+    const statusCode = message.toLowerCase().includes('forbidden') ? 403 : 500;
+    return reply.code(statusCode).send({ error: { message } });
+  }
+});
+
+
+
+  app.get(
+  '/notifications/stream',
+  { preHandler: [auth] },
+  async (req, reply) => {
+    const principal = req.principal;
+
+    if (!principal?.userId) {
+      return reply.code(401).send({ error: 'Unauthorized' });
+    }
+
+    const userId = String(principal.userId); // MUST = u.id
+
+    // -------------------------------
+    // HEADERS SSE ENTERPRISE
+    // -------------------------------
+    reply.raw.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache, no-transform',
+      'Connection': 'keep-alive',
+      'X-Accel-Buffering': 'no', // nginx safe
+      'Access-Control-Allow-Credentials': 'true',
+      'Access-Control-Allow-Origin': req.headers.origin ?? 'http://localhost:3000',
+      'Vary': 'Origin'
+    });
+
+    // Disable timeout
+    req.raw.setTimeout(0);
+
+    // Flush headers immediately
+    reply.raw.flushHeaders?.();
+
+    // -------------------------------
+    // SAFE WRITER
+    // -------------------------------
+    const write = (event: string, payload: unknown) => {
+      try {
+        reply.raw.write(`event: ${event}\n`);
+        reply.raw.write(`data: ${JSON.stringify(payload)}\n\n`);
+      } catch (err) {
+        console.error('SSE write error', err);
+      }
     };
 
-    // initial push
-    const count = await deps.inAppRepo.unreadCount(principal.userId);
-    write(JSON.stringify({ type: 'unread_count_updated', unreadCount: count }));
+    // -------------------------------
+    // INITIAL CONNECT EVENT
+    // -------------------------------
+    write('connected', { ok: true });
 
-    const unsubscribe = deps.sseHub.subscribe(principal.userId, write);
+    // -------------------------------
+    // INITIAL UNREAD COUNT
+    // -------------------------------
+    const unreadCount = await deps.inAppRepo.unreadCount(userId);
 
+    write('unread_count_updated', {
+      unreadCount
+    });
+
+    // -------------------------------
+    // REGISTER CLIENT IN HUB
+    // -------------------------------
+    const unsubscribe = deps.sseHub.subscribe(userId, (payload) => {
+      write('notification', payload);
+    });
+
+    // -------------------------------
+    // HEARTBEAT (keep connection alive)
+    // -------------------------------
+    const heartbeat = setInterval(() => {
+      write('ping', {});
+    }, 15000);
+
+    // -------------------------------
+    // CLEANUP
+    // -------------------------------
     req.raw.on('close', () => {
+      clearInterval(heartbeat);
       unsubscribe();
     });
   });

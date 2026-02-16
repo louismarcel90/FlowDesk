@@ -4,6 +4,8 @@ import { env } from './config/env';
 import { buildRequestContext } from './core/request-context';
 import { AppError } from './core/errors';
 import cors from '@fastify/cors';
+import "dotenv/config";
+
 
 export async function buildApp() {
   const app = Fastify({

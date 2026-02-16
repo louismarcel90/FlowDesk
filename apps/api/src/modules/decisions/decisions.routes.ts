@@ -77,19 +77,19 @@ type DecisionsRepo = {
   }): Promise<void>;
 };
 
-type ImpactRepo = {
+export type ImpactRepo = {
   listLinksForDecision(decisionId: string): Promise<unknown[]>; 
 };
 
-type AuthRepo = {
+export type AuthRepo = {
   getMembership(orgId: string, userId: string): Promise<Role | null>;
 };
 
-type PolicyEvalRepo = {
+export type PolicyEvalRepo = {
   insert(row: unknown): Promise<void>; 
 };
 
-type Audit = {
+export type Audit = {
   log(ctx: RequestContext, e: unknown): Promise<void>;
 };
 

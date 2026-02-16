@@ -1,9 +1,10 @@
-// import 'dotenv/config';
 import postgres, { JSONValue } from 'postgres';
 import nodemailer from 'nodemailer';
 import { kafka } from '../kafka/client';
 import { renderEmail } from '../templates/registry';
 import { randomUUID, createHash } from 'node:crypto';
+import "dotenv/config";
+
 
 const sql = postgres(process.env.DATABASE_URL!, { max: 10 });
 const TOPIC = 'flowdesk.notifications.v1';

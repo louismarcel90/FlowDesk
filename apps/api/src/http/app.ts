@@ -19,16 +19,17 @@ import { buildAuditRepo } from '../modules/audit/audit.repo';
 import { buildAuthRepo } from '../modules/auth/auth.repo';
 import { buildPolicyEvalRepo } from '../modules/policy/policyEvaluation.repo';
 
-import { buildInAppRepo } from '../modules/notifications/inapp.repo';
+import { buildInAppRepo, InAppNotificationRow } from '../modules/notifications/inapp.repo';
 import { registerInAppNotificationRoutes } from '../modules/notifications/inapp.routes';
-import { buildSseHub } from '../modules/notifications/sseHub';
-
+import { SSEHub } from '../modules/notifications/sseHub';
 
 import cors from '@fastify/cors';
 
 
+
 type AuthRoutesDeps = Parameters<typeof registerAuthRoutes>[1];
 type MeRoutesDeps = Parameters<typeof registerMeRoutes>[1];
+
 
 export async function buildApp() {
   const app = Fastify({
@@ -62,13 +63,44 @@ export async function buildApp() {
   const impactRepo = buildImpactRepo(sql)
 
   const inAppRepo = buildInAppRepo(sql);
-  const sseHub = buildSseHub();
+  const inAppRepoAdapter: Parameters<typeof registerInAppNotificationRoutes>[1]['inAppRepo'] = {
+    unreadCount: async (userId: string) =>
+    Number(await inAppRepo.unreadCount(userId)),
+
+  listInbox: async (
+    userId: string,
+    limit: number,
+    cursor?: string
+  ) => {
+    const rows = await inAppRepo.listInbox(userId, limit, cursor);
+    const array = Array.from(rows) as InAppNotificationRow[];
+
+    return array.map((r) => ({
+      id: r.id,
+      type: r.type,
+      title: r.title ?? null,
+      body: r.body ?? null,
+      entityType: r.entityType ?? null,
+      entityId: r.entityId ?? null,
+      createdAt: (r.createdAt ?? new Date()).toISOString(),
+      readAt: r.readAt ?? null,
+    }));
+  },
+
+  markRead: (userId: string, id: string) =>
+    inAppRepo.markRead(userId, id),
+
+  markAllRead: (userId: string) =>
+    inAppRepo.markAllRead(userId),
+};
+
+  const sseHub = new SSEHub();
 
   const decisionsRepo = buildDecisionsRepo(sql);
   const outboxRepo = buildOutboxRepo(sql);
   const policyEvalRepo = buildPolicyEvalRepo(
     sql,
-  ) as unknown as MeRoutesDeps['policyEvalRepo'];
+  ) as MeRoutesDeps['policyEvalRepo'];
 
   const authRepoBase = buildAuthRepo(sql);
 
@@ -129,8 +161,6 @@ export async function buildApp() {
   );
  
 
- 
-
   // --- request context + correlation
   app.addHook('onRequest', async (req, reply) => {
     const ctx = buildRequestContext(req.headers);
@@ -159,7 +189,7 @@ export async function buildApp() {
   // --- routes
   registerHealthRoutes(app, { sql, redis });
   await app.register(async (a) => registerAuthRoutes(a, { authRepo, audit }));
-  await app.register(async (a) => registerInAppNotificationRoutes(a, { authRepo, policyEvalRepo, inAppRepo, sseHub })
+  await app.register(async (a) => registerInAppNotificationRoutes(a, { authRepo, policyEvalRepo, inAppRepo: inAppRepoAdapter, sseHub })
 );
 
   app.register(async (a) =>

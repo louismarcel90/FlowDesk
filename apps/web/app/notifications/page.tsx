@@ -14,10 +14,15 @@ export default function NotificationsPage() {
     if (cursor) q.set('cursor', cursor);
 
     const res = await apiFetch(`/notifications/inbox?${q.toString()}`);
-    setNextCursor(res.nextCursor);
+    setNextCursor(res.nextCursor ?? null);
     if (!cursor) setItems(res.items);
-    else setItems((prev) => [...prev, ...res.items]);
-  }
+    else setItems((prev) => {
+      const merged = [...prev, ...res.items];
+      const map = new Map(merged.map((x: any) => [x.id, x]));
+    return Array.from(map.values());
+  });
+}
+
 
   useEffect(() => {
     load().catch((e) => setError(String(e.message ?? e)));
@@ -50,23 +55,23 @@ export default function NotificationsPage() {
               border: '1px solid #ddd',
               borderRadius: 10,
               padding: 12,
-              background: n.read_at ? 'white' : '#fff7f7'
+              background: n.readAt ? 'white' : '#fff7f7'
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
               <div style={{ display: 'grid', gap: 4 }}>
-                <strong>{n.title}</strong>
-                <div style={{ opacity: 0.8 }}>{n.body}</div>
-                <small style={{ opacity: 0.7 }}>{new Date(n.created_at).toLocaleString()}</small>
+                <strong>{n.title ?? 'Untitled'}</strong>
+                <div style={{ opacity: 0.8 }}>{n.body ?? ""}</div>
+                <small style={{ opacity: 0.7 }}>{new Date(n.createdAt).toLocaleString()}</small>
 
-                {n.entity_type && n.entity_id && (
-                  <a href={`/${n.entity_type === 'decision' ? 'decisions' : n.entity_type + 's'}/${n.entity_id}`}>
-                    Open related {n.entity_type}
+                {n.entityType && n.entityId && (
+                  <a href={`/${n.entityType === 'decision' ? 'decisions' : n.entityType + 's'}/${n.entityId}`}>
+                    Open related {n.entityType}
                   </a>
                 )}
               </div>
 
-              {!n.read_at && <button onClick={() => markRead(n.id)}>Mark read</button>}
+              {!n.readAt && <button onClick={() => markRead(n.id)}>Mark read</button>}
             </div>
           </li>
         ))}

@@ -1,27 +1,27 @@
-type Writer = (data: string) => void;
+import { JSONValue } from 'postgres';
 
-export function buildSseHub() {
-  const byUser = new Map<string, Set<Writer>>();
+export class SSEHub {
+  private clients = new Map<string, Set<(data: string) => void>>();
 
-  return {
-    subscribe(userId: string, write: Writer) {
-      const set = byUser.get(userId) ?? new Set<Writer>();
-      set.add(write);
-      byUser.set(userId, set);
+  subscribe(userId: string, write: (data: string) => void) {
+    if (!this.clients.has(userId)) this.clients.set(userId, new Set());
+    this.clients.get(userId)!.add(write);
 
-      return () => {
-        const s = byUser.get(userId);
-        if (!s) return;
-        s.delete(write);
-        if (s.size === 0) byUser.delete(userId);
-      };
-    },
-
-    publish(userId: string, event: { type: string; unreadCount?: number }) {
-      const set = byUser.get(userId);
+    return () => {
+      const set = this.clients.get(userId);
       if (!set) return;
-      const payload = JSON.stringify(event);
-      for (const w of set) w(payload);
-    }
-  };
+      set.delete(write);
+      if (set.size === 0) this.clients.delete(userId);
+    };
+  }
+
+  publish(userId: string, event: { type: string; unreadCount?: number }) {
+    const listeners = this.clients.get(userId);
+    if (!listeners) return;
+
+    const payload: JSONValue = event as unknown as JSONValue;
+    const sse = `data: ${JSON.stringify(payload)}\n\n`;
+
+    for (const write of listeners) write(sse);
+  }
 }

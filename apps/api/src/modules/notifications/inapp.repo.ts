@@ -1,18 +1,18 @@
 import type { Sql } from '../../db/client';
 
-type inAppNotificationRow = {
+export type InAppNotificationRow = {
   id: string;
-  org_id: string;
-  user_id: string;
+  orgId: string;
+  userId: string;
   type: string;
   title: string | null;
   body: string | null;
-  entity_type?: string | null;
-  entity_id?: string | null;
-  source_event_id: string;
-  correlation_id: string;
-  createdAt: Date | null;
-  readAt?: Date | null;
+  entityType: string | null;
+  entityId: string | null;
+  sourceEventId: string;
+  correlationId: string;
+  createdAt: Date;
+  readAt: Date | null;
 };
 
 export function buildInAppRepo(sql: Sql) {
@@ -27,10 +27,22 @@ export function buildInAppRepo(sql: Sql) {
     },
 
     async listInbox(userId: string, limit: number, cursor?: string) {
-      // cursor = created_at ISO string of last item (simple & deterministic)
+      // cursor = ISO string of last item createdAt
       if (!cursor) {
-        return sql<inAppNotificationRow[]>`
-          select id, type, title, body, entity_type, entity_id, created_at, read_at
+        return sql<InAppNotificationRow[]>`
+          select
+            id,
+            org_id as "orgId",
+            user_id as "userId",
+            type,
+            title,
+            body,
+            entity_type as "entityType",
+            entity_id as "entityId",
+            source_event_id as "sourceEventId",
+            correlation_id as "correlationId",
+            created_at as "createdAt",
+            read_at as "readAt"
           from in_app_notifications
           where user_id = ${userId}
           order by created_at desc
@@ -38,8 +50,18 @@ export function buildInAppRepo(sql: Sql) {
         `;
       }
 
-      return sql<inAppNotificationRow[]>`
-        select id, type, title, body, entity_type, entity_id, created_at, read_at
+      return sql<InAppNotificationRow[]>`
+        select
+          id,
+          type,
+          title,
+          body,
+          entity_type as "entityType",
+          entity_id as "entityId",
+          source_event_id as "sourceEventId",
+          correlation_id as "correlationId",
+          created_at as "createdAt",
+          read_at as "readAt"
         from in_app_notifications
         where user_id = ${userId} and created_at < ${cursor}
         order by created_at desc
@@ -67,11 +89,11 @@ export function buildInAppRepo(sql: Sql) {
       id: string;
       orgId: string;
       userId: string;
-      type: string;
-      title: string;
-      body: string;
-      entityType?: string;
-      entityId?: string;
+      type: 'decision.approved' | 'decision.rejected' | 'comment.mentioned' | 'comment.posted' | string;
+      title: 'Decision approved' | 'Decision rejected' | 'Mentioned in comment' | 'New comment' | string;
+      body: `Decision "${InAppNotificationRow['title']}" was approved' | 'Decision "Should we adopt X?" was rejected' | 'You were mentioned in a comment' | 'A new comment was posted` | string;
+      entityType: string | null;
+      entityId: string | null;
       sourceEventId: string;
       correlationId: string;
     }) {
@@ -79,9 +101,8 @@ export function buildInAppRepo(sql: Sql) {
         insert into in_app_notifications
           (id, org_id, user_id, type, title, body, entity_type, entity_id, source_event_id, correlation_id)
         values
-          (${n.id}, ${n.orgId}, ${n.userId}, ${n.type}, ${n.title}, ${n.body},
-           ${n.entityType ?? null}, ${n.entityId ?? null}, ${n.sourceEventId}, ${n.correlationId})
+          (${n.id}, ${n.orgId}, ${n.userId}, ${n.type}, ${n.title}, ${n.body}, ${n.entityType}, ${n.entityId}, ${n.sourceEventId}, ${n.correlationId})
       `;
-    }
+    },
   };
 }

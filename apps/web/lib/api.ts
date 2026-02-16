@@ -5,17 +5,21 @@ export function getToken() {
   return localStorage.getItem('flowdesk_access_token');
 }
 
-export async function apiFetch(path: string, init?: RequestInit) {
+export async function apiFetch<T = any>(path: string, init: RequestInit = {}): Promise<T> {
   const token = getToken();
-  const headers = new Headers(init?.headers);
-  headers.set('content-type', 'application/json');
+
+  const headers = new Headers(init.headers);
+  // évite d’écraser un content-type si tu en passes un
+  if (!headers.has('content-type')) headers.set('content-type', 'application/json');
   if (token) headers.set('Authorization', `Bearer ${token}`);
 
   const res = await fetch(`${API_URL}${path}`, { ...init, headers });
+
   const json = await res.json().catch(() => null);
 
   if (!res.ok) {
     throw new Error(json?.error?.message ?? `Request failed (${res.status})`);
   }
-  return json;
+
+  return json as T;
 }

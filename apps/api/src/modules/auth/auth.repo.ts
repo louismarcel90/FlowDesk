@@ -21,9 +21,6 @@ export type RefreshRow = {
   last_used_at?: Date | null;
 };
 
-// type BeginCb = Parameters<Sql['begin']>[0];
-// type Tx = Parameters<BeginCb>[0];
-
 export function buildAuthRepo(sql: Sql) {
   return {
     async findUserByEmail(email: string): Promise<DbUser | null> {

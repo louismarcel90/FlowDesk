@@ -55,6 +55,11 @@ required_rank := {
   "notifications.read": 1,
   "notifications.manage": 1,
 
+  "notifications.inbox": 1,
+  "notifications.read_one": 1,
+  "notifications.read_all": 1,
+  "notifications.stream": 1,
+
 }
 
 # ---- Org matching
