@@ -60,6 +60,10 @@ required_rank := {
   "notifications.read_all": 1,
   "notifications.stream": 1,
 
+  "admin.ops.read": 4,
+  "admin.ops.write": 4,
+
+
 }
 
 # ---- Org matching

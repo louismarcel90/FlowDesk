@@ -6,11 +6,16 @@ import { createSql } from '../db/client';
 import Redis from 'ioredis';
 import { buildAuditService } from '../modules/audit/audit.service';
 
-import { registerHealthRoutes } from '../modules/health/health.routes';
 import { registerAuthRoutes } from '../modules/auth/auth.routes';
 import { registerMeRoutes } from '../modules/auth/me.routes';
 import { registerDecisionRoutes } from '../modules/decisions/decisions.routes';
 import { registerImpactRoutes } from '../modules/impact/impact.routes';
+import { registerHealthRoutes } from '../modules/health/health.routes';
+import { httpRequestDuration } from './metrics.routes';
+import { registerMetricsRoutes } from './metrics.routes';
+import { registerInAppNotificationRoutes } from '../modules/notifications/inapp.routes';
+import { registerOpsRoutes } from '../modules/ops/ops.routes';
+
 
 import { buildImpactRepo } from '../modules/impact/impact.repo';
 import { buildOutboxRepo } from '../modules/outbox/outbox.repo';
@@ -18,14 +23,18 @@ import { buildDecisionsRepo } from '../modules/decisions/decisions.repo';
 import { buildAuditRepo } from '../modules/audit/audit.repo';
 import { buildAuthRepo } from '../modules/auth/auth.repo';
 import { buildPolicyEvalRepo } from '../modules/policy/policyEvaluation.repo';
-
 import { buildInAppRepo, InAppNotificationRow } from '../modules/notifications/inapp.repo';
-import { registerInAppNotificationRoutes } from '../modules/notifications/inapp.routes';
-import { SSEHub } from '../modules/notifications/sseHub';
+import { buildDlqRepo } from '../modules/ops/dlq.repo';
 
+import { SSEHub } from '../modules/notifications/sseHub';
+import { OpsDeps } from '../modules/ops/ops.routes';
 import cors from '@fastify/cors';
 
-
+declare module 'fastify'{
+  interface FastifyReply{
+    getResponseTime(): number
+  }
+}
 
 type AuthRoutesDeps = Parameters<typeof registerAuthRoutes>[1];
 type MeRoutesDeps = Parameters<typeof registerMeRoutes>[1];
@@ -61,6 +70,8 @@ export async function buildApp() {
   const auditRepo = buildAuditRepo(sql);
   const audit = buildAuditService(auditRepo);
   const impactRepo = buildImpactRepo(sql)
+  const dlqRepo = buildDlqRepo(sql);
+
 
   const inAppRepo = buildInAppRepo(sql);
   const inAppRepoAdapter: Parameters<typeof registerInAppNotificationRoutes>[1]['inAppRepo'] = {
@@ -138,8 +149,6 @@ export async function buildApp() {
     },
   });
 
-
-
   await app.register(async (a) =>
     registerDecisionRoutes(a, {
       impactRepo,
@@ -159,6 +168,11 @@ export async function buildApp() {
       audit,
     }),
   );
+
+  const opsDeps: OpsDeps = {authRepo, policyEvalRepo, dlqRepo, audit };
+  await app.register(async (a) =>
+  registerOpsRoutes(a, opsDeps)
+);
  
 
   // --- request context + correlation
@@ -198,6 +212,18 @@ export async function buildApp() {
       policyEvalRepo,
     }),
   );
+
+  app.register(registerMetricsRoutes);
+
+
+  app.addHook('onResponse', async (req, reply) => {
+  const route = (req.routeOptions?.url ?? req.url) as string;
+  httpRequestDuration
+    .labels(req.method, route, String(reply.statusCode))
+    .observe(reply.getResponseTime());
+});
+
+
 
   // --- shutdown
   app.addHook('onClose', async () => {
