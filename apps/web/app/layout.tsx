@@ -13,6 +13,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <a href="/dashboard">Dashboard</a>
               <a href="/initiatives">Initiatives</a>
               <a href="/decisions">Decisions</a>
+              <a href="/ops/notifications">Ops</a>
               <a href="/login">Login</a>
               <NotificationBell />
             </nav>
