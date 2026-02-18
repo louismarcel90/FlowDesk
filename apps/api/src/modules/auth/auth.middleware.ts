@@ -4,6 +4,7 @@ import { verifyAccessToken } from './auth.jwt';
 import type { Role } from './auth.types';
 import { RoleRank } from './auth.types';
 
+
 export type AuthPrincipal = {
   orgId: string;
   userId: string;

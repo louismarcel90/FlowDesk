@@ -212,7 +212,7 @@ export async function buildApp() {
     }),
   );
 
-  app.register(registerMetricsRoutes);
+  await app.register(registerMetricsRoutes, {prefix: '/internal/metrics'});
 
 
   app.addHook('onResponse', async (req, reply) => {

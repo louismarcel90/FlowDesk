@@ -14,7 +14,7 @@ export const httpRequestDuration = new client.Histogram({
 register.registerMetric(httpRequestDuration);
 
 export async function registerMetricsRoutes(app: FastifyInstance) {
-  app.get('/metrics', async (_req, reply) => {
+  app.get('/', async (_req, reply) => {
     reply.header('content-type', register.contentType);
     return register.metrics();
   });
