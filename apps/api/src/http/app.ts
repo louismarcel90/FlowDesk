@@ -31,11 +31,12 @@ import { buildInAppRepo, InAppNotificationRow } from '../modules/notifications/i
 import { buildDlqRepo } from '../modules/ops/dlq.repo';
 
 
-declare module 'fastify'{
-  interface FastifyReply{
-    getResponseTime(): number
+declare module 'fastify' {
+  interface FastifyRequest {
+    _startAt?: bigint;
   }
 }
+
 
 type AuthRoutesDeps = Parameters<typeof registerAuthRoutes>[1];
 type MeRoutesDeps = Parameters<typeof registerMeRoutes>[1];
@@ -185,6 +186,7 @@ export async function buildApp() {
       requestId: ctx.requestId,
       correlationId: ctx.correlationId,
     });
+    req._startAt = process.hrtime.bigint();
   });
 
   // --- errors
@@ -215,12 +217,19 @@ export async function buildApp() {
   await app.register(registerMetricsRoutes, {prefix: '/internal/metrics'});
 
 
-  app.addHook('onResponse', async (req, reply) => {
-  const route = (req.routeOptions?.url ?? req.url) as string;
+app.addHook('onResponse', async (req, reply) => {
+  const route = (req.routeOptions?.url ?? req.url ?? '').split('?')[0];
+
+  const start =  req._startAt 
+  if (!start) return;
+
+  const durationMs = Number(process.hrtime.bigint() - start) / 1e6;
+
   httpRequestDuration
     .labels(req.method, route, String(reply.statusCode))
-    .observe(reply.getResponseTime());
+    .observe(durationMs);
 });
+
 
 
 
