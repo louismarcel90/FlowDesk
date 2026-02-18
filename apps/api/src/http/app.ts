@@ -5,6 +5,9 @@ import { AppError } from '../core/errors';
 import { createSql } from '../db/client';
 import Redis from 'ioredis';
 import { buildAuditService } from '../modules/audit/audit.service';
+import { SSEHub } from '../modules/notifications/sseHub';
+import cors from '@fastify/cors';
+
 
 import { registerAuthRoutes } from '../modules/auth/auth.routes';
 import { registerMeRoutes } from '../modules/auth/me.routes';
@@ -15,6 +18,7 @@ import { httpRequestDuration } from './metrics.routes';
 import { registerMetricsRoutes } from './metrics.routes';
 import { registerInAppNotificationRoutes } from '../modules/notifications/inapp.routes';
 import { registerOpsRoutes } from '../modules/ops/ops.routes';
+import { OpsDeps } from '../modules/ops/ops.routes';
 
 
 import { buildImpactRepo } from '../modules/impact/impact.repo';
@@ -26,9 +30,6 @@ import { buildPolicyEvalRepo } from '../modules/policy/policyEvaluation.repo';
 import { buildInAppRepo, InAppNotificationRow } from '../modules/notifications/inapp.repo';
 import { buildDlqRepo } from '../modules/ops/dlq.repo';
 
-import { SSEHub } from '../modules/notifications/sseHub';
-import { OpsDeps } from '../modules/ops/ops.routes';
-import cors from '@fastify/cors';
 
 declare module 'fastify'{
   interface FastifyReply{
@@ -170,9 +171,7 @@ export async function buildApp() {
   );
 
   const opsDeps: OpsDeps = {authRepo, policyEvalRepo, dlqRepo, audit };
-  await app.register(async (a) =>
-  registerOpsRoutes(a, opsDeps)
-);
+  await app.register(async (a) => registerOpsRoutes(a, opsDeps));
  
 
   // --- request context + correlation
@@ -201,7 +200,7 @@ export async function buildApp() {
   });
 
   // --- routes
-  registerHealthRoutes(app, { sql, redis });
+  await app.register(async (a) => registerHealthRoutes(a, { sql, redis }));
   await app.register(async (a) => registerAuthRoutes(a, { authRepo, audit }));
   await app.register(async (a) => registerInAppNotificationRoutes(a, { authRepo, policyEvalRepo, inAppRepo: inAppRepoAdapter, sseHub })
 );

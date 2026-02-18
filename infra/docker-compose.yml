@@ -94,6 +94,21 @@ services:
     ports:
       - "8025:8025" # UI
       - "1025:1025" # SMTP
+  prometheus:
+    image: prom/prometheus:v2.53.1
+    container_name: flowdesk-prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+   
+  grafana:
+    image: grafana/grafana:11.1.4
+    container_name: flowdesk-grafana
+    ports:
+      - "3005:3000"
+    depends_on:
+      - prometheus
 
 volumes:
   pgdata:
