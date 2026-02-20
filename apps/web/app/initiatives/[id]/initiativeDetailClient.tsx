@@ -49,7 +49,7 @@ export default function InitiativeDetailClient({ id }: Props) {
         <ul>
           {(data.metrics ?? []).map((m: any) => (
             <li key={m.id}>
-              <Link href={`/metrics/${m.id}`}>{m.name}</Link>
+              <Link href={`/impact/metrics/${m.id}`}>{m.name}</Link>
             </li>
           ))}
         </ul>

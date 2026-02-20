@@ -10,7 +10,7 @@ export default function DashboardPage() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    Promise.all([apiFetch('/decisions'), apiFetch('/initiatives'), apiFetch('/metrics')])
+    Promise.all([apiFetch('/decisions'), apiFetch('/impact/initiatives'), apiFetch('/impact/metrics')])
       .then(([d, i, m]) => {
         setDecisions(d);
         setInitiatives(i);

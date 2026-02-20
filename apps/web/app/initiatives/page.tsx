@@ -10,7 +10,7 @@ export default function InitiativesPage() {
   const [description, setDescription] = useState('Improve decision clarity and reduce rework.');
 
   async function load() {
-    const res = await apiFetch('/initiatives');
+    const res = await apiFetch('/impact/initiatives');
     setItems(res);
   }
 
@@ -21,7 +21,7 @@ export default function InitiativesPage() {
   async function create() {
     setError('');
     try {
-      await apiFetch('/initiatives', {
+      await apiFetch('/impact/initiatives', {
         method: 'POST',
         body: JSON.stringify({ name, description, status: 'active' })
       });
@@ -48,7 +48,7 @@ export default function InitiativesPage() {
         <ul>
           {items.map((i) => (
             <li key={i.id}>
-              <a href={`/initiatives/${i.id}`}>{i.name}</a> — {i.status}
+              <a href={`/impact/initiatives/${i.id}`}>{i.name}</a> — {i.status}
             </li>
           ))}
         </ul>

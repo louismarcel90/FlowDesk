@@ -3,37 +3,40 @@
 import { useEffect, useState } from 'react';
 import { apiFetch } from '../../lib/api';
 
+function pill(status: string) {
+  if (status === 'approved') return 'fd-pill fd-pill--success';
+  if (status === 'draft') return 'fd-pill';
+  return 'fd-pill fd-pill--warn';
+}
+
 export default function DecisionsPage() {
   const [items, setItems] = useState<any[]>([]);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const token = localStorage.getItem('flowdesk_access_token');
-    console.log('[Decisions] token =', token);
-
-    if (!token) {
-      setError('Not authenticated, please login.');
-      return;
-    }
-
     apiFetch('/decisions')
       .then(setItems)
       .catch((e) => setError(String(e.message ?? e)));
   }, []);
 
   return (
-    <main>
-      <h1>Decisions</h1>
-      {error && <p style={{ color: 'crimson' }}>{error}</p>}
-      <ul style={{ display: 'grid', gap: 8 }}>
+    <main className="fd-grid">
+      <div className="fd-spread">
+        <h1>Decisions</h1>
+        {/* <a className="fd-btn fd-btn--primary" href="/dashboard">Dashboard</a> */}
+      </div>
+
+      {error && <div className="fd-card"><div className="fd-card-inner" style={{ color: 'var(--danger)' }}>{error}</div></div>}
+
+      <ul className="fd-list">
         {items.map((d) => (
-          <li
-            key={d.id}
-            style={{ border: '1px solid #ddd', padding: 12, borderRadius: 8 }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <li key={d.id} className="fd-item">
+            <div className="fd-item-title">
               <a href={`/decisions/${d.id}`}>{d.title}</a>
-              <span>{d.status}</span>
+              <span className={pill(d.status)}>{d.status}</span>
+            </div>
+            <div className="fd-item-meta">
+              Created: {new Date(d.created_at).toLocaleString()}
             </div>
           </li>
         ))}

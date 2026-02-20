@@ -52,6 +52,11 @@ export async function buildApp() {
           }
         : { level: env.LOG_LEVEL },
   });
+  
+  app.decorateRequest('principal', undefined);
+  app.decorateRequest('ctx')
+
+
   await app.register(cors, {
     origin: (origin, cb) => {
       // autorise aussi curl / server-to-server (origin undefined)
@@ -169,6 +174,7 @@ export async function buildApp() {
       policyEvalRepo,
       audit,
     }),
+    {prefix: '/impact'}
   );
 
   const opsDeps: OpsDeps = {authRepo, policyEvalRepo, dlqRepo, audit };
@@ -214,7 +220,7 @@ export async function buildApp() {
     }),
   );
 
-  await app.register(registerMetricsRoutes, {prefix: '/internal/metrics'});
+  await app.register(registerMetricsRoutes);
 
 
 app.addHook('onResponse', async (req, reply) => {

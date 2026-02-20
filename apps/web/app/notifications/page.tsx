@@ -55,7 +55,8 @@ export default function NotificationsPage() {
               border: '1px solid #ddd',
               borderRadius: 10,
               padding: 12,
-              background: n.readAt ? 'white' : '#fff7f7'
+              background: n.readAt ? 'white' : '#fff7f7',
+              color: '#000'
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>

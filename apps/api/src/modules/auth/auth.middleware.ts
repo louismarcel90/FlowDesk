@@ -14,7 +14,6 @@ const PUBLIC_PATHS = new Set([
   '/metrics',
   '/health',
   '/ready',
-  '/internal/metrics',
 ]);
 
 export type AuthPrincipal = {

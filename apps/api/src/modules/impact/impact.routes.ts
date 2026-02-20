@@ -46,13 +46,15 @@ export async function registerImpactRoutes(app: FastifyInstance, deps: Deps) {
 
 // INITIATIVES
   app.get('/initiatives', { preHandler: [auth] }, async (req) => {
-    const ctx = (req).ctx as RequestContext;
-    const principal = (req).principal;
+    const ctx = req.ctx as RequestContext;
+    const principal = req.principal!;
+
+    if(!principal) throw new AppError('UNAUTHORIZED', 'Not authenticated', 401)
 
     await authorize({
       ctx, principal,
       action: 'initiative.read',
-      resource: { type: 'initiative', id: '*', orgId: principal.orgId },
+      resource: { type: 'initiative', id: '*', orgId: principal?.orgId },
       policyEvalRepo: deps.policyEvalRepo
     });
 
@@ -60,9 +62,11 @@ export async function registerImpactRoutes(app: FastifyInstance, deps: Deps) {
   });
 
   app.post('/initiatives', { preHandler: [auth] }, async (req) => {
-    const ctx = (req).ctx as RequestContext;
-    const principal = (req).principal;
+    const ctx = req.ctx as RequestContext;
+    const principal = req.principal!;
     const body = CreateInitiativeSchema.parse(req.body);
+
+    if(!principal) throw new AppError('UNAUTHORIZED', 'Not authenticated', 401)
 
     await authorize({
       ctx, principal,
@@ -93,9 +97,11 @@ export async function registerImpactRoutes(app: FastifyInstance, deps: Deps) {
   });
 
   app.get<{ Params: { id: string } }>('/initiatives/:id', { preHandler: [auth] }, async (req) => {
-    const ctx = (req).ctx as RequestContext;
-    const principal = (req).principal;
+    const ctx = req.ctx as RequestContext;
+    const principal = req.principal!;
     const {id} = req.params;
+
+    if(!principal) throw new AppError('UNAUTHORIZED', 'Not authenticated', 401)
 
     await authorize({
       ctx, principal,
@@ -115,8 +121,10 @@ export async function registerImpactRoutes(app: FastifyInstance, deps: Deps) {
 
   // METRICS
   app.get('/metrics', { preHandler: [auth] }, async (req) => {
-    const ctx = (req).ctx as RequestContext;
-    const principal = (req).principal;
+    const ctx = req.ctx as RequestContext;
+    const principal = req.principal!;
+
+    if(!principal) throw new AppError('UNAUTHORIZED', 'Not authenticated', 401)
 
     await authorize({
       ctx, principal,
@@ -129,9 +137,11 @@ export async function registerImpactRoutes(app: FastifyInstance, deps: Deps) {
   });
 
   app.post('/metrics', { preHandler: [auth] }, async (req) => {
-    const ctx = (req).ctx as RequestContext;
-    const principal = (req).principal;
+    const ctx = req.ctx as RequestContext;
+    const principal = req.principal!;
     const body = CreateMetricSchema.parse(req.body);
+
+    if(!principal) throw new AppError('UNAUTHORIZED', 'Not authenticated', 401)
 
     await authorize({
       ctx, principal,
@@ -164,10 +174,12 @@ export async function registerImpactRoutes(app: FastifyInstance, deps: Deps) {
 
 
   app.post<{ Params: { id: string }}>('/metrics/:id/snapshots', { preHandler: [auth] }, async (req) => {
-    const ctx = (req).ctx as RequestContext;
-    const principal = (req).principal;
+    const ctx = req.ctx as RequestContext;
+    const principal = req.principal!;
     const {id} = req.params;
     const body = CreateMetricSnapshotSchema.parse(req.body);
+
+    if(!principal) throw new AppError('UNAUTHORIZED', 'Not authenticated', 401)
 
     await authorize({
       ctx, principal,
@@ -198,10 +210,12 @@ export async function registerImpactRoutes(app: FastifyInstance, deps: Deps) {
 
   // link decision -> initiative
   app.post<{ Params: { id: string }}>('/decisions/:id/links', { preHandler: [auth] }, async (req) => {
-    const ctx = (req).ctx as RequestContext;
-    const principal = (req).principal;
+    const ctx = req.ctx as RequestContext;
+    const principal = req.principal!;
     const {id:decisionId} = req.params;
     const body = LinkDecisionSchema.parse(req.body);
+
+    if(!principal) throw new AppError('UNAUTHORIZED', 'Not authenticated', 401)
 
     await authorize({
       ctx, principal,

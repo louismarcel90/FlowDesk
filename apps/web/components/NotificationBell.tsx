@@ -1,125 +1,288 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { apiFetch, getToken } from '../lib/api';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { apiFetch } from '../lib/api'; 
 
-function sleep(ms: number) {
-  return new Promise((r) => setTimeout(r, ms));
+type InboxItem = {
+  id: string;
+  type: string;
+  title: string;
+  body: string;
+  entityType?: string;
+  entityId?: string;
+  createdAt: string;
+  readAt?: string | null;
+};
+
+type InboxResponse = {
+  items: InboxItem[];
+  nextCursor?: string | null;
+};
+
+function formatDate(iso: string) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return 'Invalid Date';
+  return d.toLocaleString();
 }
 
-/**
- * SSE via fetch streaming (works with Authorization header).
- * Emits JSON payloads: { type: 'unread_count_updated', unreadCount: number }
- */
-async function connectSse(onEvent: (e: any) => void, onError: () => void) {
-  const token = getToken();
-  if (!token) return onError();
+export default function NotificationBell() {
+  const [open, setOpen] = useState(false);
+  const [expanded, setExpanded] = useState(false);
 
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'}/notifications/stream`, {
-    headers: { authorization: `Bearer ${token}` }
-  });
+  const [unreadCount, setUnreadCount] = useState<number>(0);
+  const [items, setItems] = useState<InboxItem[]>([]);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
 
-  if (!res.ok || !res.body) return onError();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string>('');
 
-  const reader = res.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = '';
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const hasLoadedOnceRef = useRef(false);
 
-  for (;;) {
-    const { value, done } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
+  const limit = expanded ? 50 : 10;
 
-    // SSE frames separated by \n\n
-    const parts = buffer.split('\n\n');
-    buffer = parts.pop() ?? '';
+  // click outside => close
+  useEffect(() => {
+    function onDocClick(e: MouseEvent) {
+      if (!open) return;
+      const el = rootRef.current;
+      if (!el) return;
+      if (e.target instanceof Node && !el.contains(e.target)) setOpen(false);
+    }
+    document.addEventListener('mousedown', onDocClick);
+    return () => document.removeEventListener('mousedown', onDocClick);
+  }, [open]);
 
-    for (const frame of parts) {
-      // We only write `data: <json>`
-      const line = frame.split('\n').find((l) => l.startsWith('data: '));
-      if (!line) continue;
-      const json = line.slice('data: '.length).trim();
-      try {
-        onEvent(JSON.parse(json));
-      } catch {}
+  async function refreshUnread() {
+    try {
+      const res = await apiFetch<{ unreadCount: number }>('/notifications/unread-count');
+      setUnreadCount(res.unreadCount ?? 0);
+    } catch {
+      // pas bloquant
     }
   }
 
-  onError();
-}
+  async function loadInbox(opts?: { append?: boolean; cursor?: string | null }) {
+    setError('');
+    setLoading(true);
+    try {
+      // ton backend retourne items + nextCursor
+      // on tente avec query cursor/limit, et si backend ignore, ça marche quand même
+      const qs = new URLSearchParams();
+      qs.set('limit', String(limit));
+      if (opts?.cursor) qs.set('cursor', opts.cursor);
 
-export function NotificationBell() {
-  const [unread, setUnread] = useState<number>(0);
-  const [live, setLive] = useState<boolean>(false);
+      const path = `/notifications/inbox?${qs.toString()}`;
 
-  // initial fetch
+      const res = await apiFetch<InboxResponse>(path);
+
+      const newItems = Array.isArray(res.items) ? res.items : [];
+      setItems(prev => (opts?.append ? [...prev, ...newItems] : newItems));
+      setNextCursor(res.nextCursor ?? null);
+    } catch (e: any) {
+      setError(e?.message ?? 'Failed to load notifications');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // Load when opening the dropdown (once), then refresh on re-open
   useEffect(() => {
-    apiFetch('/notifications/unread-count')
-      .then((r) => setUnread(r.unreadCount ?? 0))
-      .catch(() => setUnread(0));
-  }, []);
+    if (!open) return;
 
-  // live SSE + fallback polling
-  useEffect(() => {
-    let cancelled = false;
+    refreshUnread();
 
-    async function start() {
-      // try SSE
-      setLive(true);
-      connectSse(
-        (evt) => {
-          if (cancelled) return;
-          if (evt?.type === 'unread_count_updated' && typeof evt.unreadCount === 'number') {
-            setUnread(evt.unreadCount);
-          }
-        },
-        async () => {
-          if (cancelled) return;
-          // fallback polling
-          setLive(false);
-          for (;;) {
-            if (cancelled) return;
-            try {
-              const r = await apiFetch('/notifications/unread-count');
-              setUnread(r.unreadCount ?? 0);
-            } catch {}
-            await sleep(8000);
-          }
-        }
-      );
+    // première ouverture => charge la liste
+    if (!hasLoadedOnceRef.current) {
+      hasLoadedOnceRef.current = true;
+      loadInbox({ append: false });
+      return;
     }
 
-    start();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    loadInbox({ append: false });
+  }, [open, limit]); // limit change (expanded) => refetch
 
-  const badge = useMemo(() => (unread > 99 ? '99+' : String(unread)), [unread]);
+  const title = useMemo(() => {
+    if (unreadCount > 0) return `Notifications (${unreadCount})`;
+    return 'Notifications';
+  }, [unreadCount]);
 
   return (
-    <a href="/notifications" style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+    <div ref={rootRef} style={{ position: 'relative' }}>
+      <button
+        type="button"
+        className="fd-btn"
+        onClick={() => setOpen(v => !v)}
+        aria-expanded={open}
+        aria-label="Notifications"
+        style={{ position: 'relative' }}
+      >
+        🔔
+        {unreadCount > 0 && (
+          <span
+            style={{
+              position: 'absolute',
+              top: -6,
+              right: -6,
+              minWidth: 18,
+              height: 18,
+              padding: '0 6px',
+              borderRadius: 999,
+              fontSize: 12,
+              lineHeight: '18px',
+              background: 'var(--danger)',
+              color: '#000',
+              fontWeight: 700,
+            }}
+          >
+            {unreadCount}
+          </span>
+        )}
+      </button>
 
-      {unread > 0 && (
-        <span
+      {open && (
+        <div
           style={{
             position: 'absolute',
-            top: -6,
-            right: -10,
-            background: 'red',
-            color: 'white',
-            borderRadius: 999,
-            padding: '2px 6px',
-            fontSize: 12,
-            fontWeight: 700,
-            lineHeight: 1
+            right: 0,
+            marginTop: 10,
+            width: 520,
+            maxWidth: 'calc(100vw - 24px)',
+            borderRadius: 16,
+            border: '1px solid rgba(255,255,255,0.14)',
+            background: 'rgba(7, 11, 24, 0.92)',
+            boxShadow: '0 24px 70px rgba(0,0,0,0.45)',
+            overflow: 'hidden',
+            zIndex: 1000,
           }}
-          aria-label={`${unread} unread notifications`}
+          onMouseDown={(e) => {
+            // empêche le click-outside de fermer quand tu cliques dans le dropdown
+            e.stopPropagation();
+          }}
         >
-          {badge}
-        </span>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '14px 16px',
+              borderBottom: '1px solid rgba(255,255,255,0.10)',
+            }}
+          >
+            <div style={{ fontSize: 16, fontWeight: 800 }}>{title}</div>
+
+            <button
+              type="button"
+              className="fd-link"
+              onClick={() => {
+                // TODO: appelle ton endpoint "mark all read" si tu l’as
+                // puis refresh:
+                loadInbox({ append: false });
+                refreshUnread();
+              }}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: 'rgba(255,255,255,0.85)',
+                textDecoration: 'underline',
+                cursor: 'pointer',
+                fontWeight: 600,
+              }}
+            >
+              Mark all as read
+            </button>
+          </div>
+
+          <div style={{ padding: 12, display: 'grid', gap: 10 }}>
+            {error && (
+              <div
+                style={{
+                  padding: 10,
+                  borderRadius: 12,
+                  background: 'rgba(255, 77, 125, 0.12)',
+                  border: '1px solid rgba(255, 77, 125, 0.35)',
+                  color: 'var(--danger)',
+                  fontWeight: 600,
+                }}
+              >
+                {error}
+              </div>
+            )}
+
+            {!error && loading && items.length === 0 && (
+              <div style={{ color: 'rgba(255,255,255,0.75)' }}>Loading…</div>
+            )}
+
+            {!error && !loading && items.length === 0 && (
+              <div style={{ color: 'rgba(255,255,255,0.75)' }}>No notifications</div>
+            )}
+
+            {items.map((n) => (
+              <div
+                key={n.id}
+                style={{
+                  background: 'rgba(255,255,255,0.06)',
+                  border: '1px solid rgba(255,255,255,0.10)',
+                  borderRadius: 14,
+                  padding: 12,
+                }}
+              >
+                <div style={{ fontWeight: 800, color: 'rgba(255,255,255,0.92)' }}>
+                  {n.title}
+                </div>
+                <div style={{ marginTop: 4, color: 'rgba(255,255,255,0.80)' }}>
+                  {n.body}
+                </div>
+                <div style={{ marginTop: 6, fontSize: 12, color: 'rgba(255,255,255,0.55)' }}>
+                  {formatDate(n.createdAt)}
+                </div>
+              </div>
+            ))}
+
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                paddingTop: 6,
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => setExpanded(v => !v)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'rgba(255,255,255,0.85)',
+                  textDecoration: 'underline',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                }}
+              >
+                {expanded ? 'Show less' : 'Show More'}
+              </button>
+
+              {/* <button
+                type="button"
+                disabled={!nextCursor || loading}
+                onClick={() => loadInbox({ append: true, cursor: nextCursor })}
+                style={{
+                  border: '1px solid rgba(255,255,255,0.14)',
+                  background: 'rgba(255,255,255,0.06)',
+                  color: 'rgba(255,255,255,0.9)',
+                  padding: '8px 10px',
+                  borderRadius: 12,
+                  cursor: !nextCursor || loading ? 'not-allowed' : 'pointer',
+                  opacity: !nextCursor || loading ? 0.55 : 1,
+                  fontWeight: 700,
+                }}
+              >
+                Load more
+              </button> */}
+            </div>
+          </div>
+        </div>
       )}
-      <span style={{ marginLeft: 8, fontSize: 12, opacity: 0.65 }}>Notifications{live ? ' live 🔔' : ' poll🔔'}</span>
-    </a>
+    </div>
   );
 }

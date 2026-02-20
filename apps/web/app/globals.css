@@ -1,0 +1,609 @@
+/* =========================================================
+   FlowDesk — Premium Enterprise UI (No framework required)
+   Palette: Midnight Navy + Electric Indigo + Cyan
+   ========================================================= */
+
+/* ---------- Reset / Base ---------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  margin: 0;
+}
+
+img,
+svg,
+video {
+  max-width: 100%;
+  display: block;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+/* ---------- Theme Tokens ---------- */
+:root {
+  /* Backgrounds */
+  --bg0: #070b18; /* deep navy */
+  --bg1: #0a1026; /* slightly lighter */
+  --surface: rgba(255, 255, 255, 0.06);
+  --surface2: rgba(255, 255, 255, 0.08);
+
+  /* Text */
+  --text: rgba(255, 255, 255, 0.92);
+  --muted: rgba(255, 255, 255, 0.64);
+  --faint: rgba(255, 255, 255, 0.46);
+
+  /* Borders */
+  --border: rgba(255, 255, 255, 0.12);
+  --border2: rgba(255, 255, 255, 0.18);
+
+  /* Accents */
+  --primary: #6d5efc;  /* electric indigo */
+  --primary2: #7b8cff; /* soft indigo */
+  --cyan: #39d6ff;     /* premium cyan */
+  --success: #2ee9a6;  /* mint */
+  --warn: #ffcc66;     /* warm amber */
+  --danger: #ff4d7d;   /* rose */
+
+  /* Shadow */
+  --shadow-lg: 0 22px 70px rgba(0, 0, 0, 0.58);
+  --shadow-md: 0 12px 40px rgba(0, 0, 0, 0.45);
+  --shadow-sm: 0 8px 24px rgba(0, 0, 0, 0.35);
+
+  /* Radius / Spacing */
+  --r-xl: 20px;
+  --r-lg: 16px;
+  --r-md: 12px;
+  --r-sm: 10px;
+
+  --gap-1: 6px;
+  --gap-2: 10px;
+  --gap-3: 14px;
+  --gap-4: 18px;
+  --gap-5: 24px;
+
+  /* Typography */
+  --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
+}
+
+::selection {
+  background: rgba(109, 94, 252, 0.35);
+}
+
+/* ---------- Page Background ---------- */
+body {
+  font-family: var(--font);
+  color: var(--text);
+  background:
+    radial-gradient(1200px 700px at 20% -10%, rgba(109, 94, 252, 0.25), transparent 55%),
+    radial-gradient(900px 500px at 85% 5%, rgba(57, 214, 255, 0.18), transparent 52%),
+    radial-gradient(900px 600px at 60% 110%, rgba(46, 233, 166, 0.10), transparent 55%),
+    linear-gradient(180deg, var(--bg0), var(--bg1) 65%, #070b18);
+  min-height: 100vh;
+}
+
+/* ---------- Links ---------- */
+a {
+  color: rgba(255, 255, 255, 0.88);
+  text-decoration: none;
+}
+
+a:hover {
+  color: #ffffff;
+}
+
+/* ---------- Layout Helpers ---------- */
+.fd-shell {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 22px;
+}
+
+.fd-grid {
+  display: grid;
+  gap: var(--gap-5);
+}
+
+.fd-row {
+  display: flex;
+  gap: var(--gap-3);
+  align-items: center;
+}
+
+.fd-spread {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--gap-3);
+}
+
+.fd-stack {
+  display: grid;
+  gap: var(--gap-3);
+}
+
+.fd-wrap {
+  flex-wrap: wrap;
+}
+
+/* ---------- App Header ---------- */
+.fd-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  background: linear-gradient(180deg, rgba(7, 11, 24, 0.85), rgba(7, 11, 24, 0.55));
+  border-bottom: 1px solid var(--border);
+}
+
+.fd-header-inner {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 14px 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap-4);
+}
+
+.fd-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.fd-mark {
+  width: 36px;
+  height: 36px;
+  border-radius: 14px;
+  background:
+    radial-gradient(12px 12px at 30% 30%, rgba(255, 255, 255, 0.35), transparent 60%),
+    linear-gradient(135deg, rgba(109, 94, 252, 1), rgba(57, 214, 255, 1));
+  box-shadow: 0 12px 30px rgba(109, 94, 252, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.fd-brand-title {
+  display: grid;
+  line-height: 1.1;
+}
+
+.fd-brand-title strong {
+  font-size: 14px;
+  letter-spacing: 0.2px;
+}
+
+.fd-brand-title span {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.fd-nav {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.fd-nav a {
+  padding: 9px 11px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.fd-nav a:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.10);
+  color: rgba(255, 255, 255, 0.95);
+}
+
+/* ---------- Cards ---------- */
+.fd-card {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.04));
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.fd-card-inner {
+  padding: 16px;
+}
+
+.fd-card-header {
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--gap-3);
+}
+
+.fd-card-title {
+  font-size: 14px;
+  font-weight: 750;
+  letter-spacing: 0.2px;
+}
+
+.fd-card-subtitle {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* ---------- Pills / Status ---------- */
+.fd-pill {
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.fd-pill--success {
+  border-color: rgba(46, 233, 166, 0.35);
+  background: rgba(46, 233, 166, 0.10);
+}
+
+.fd-pill--warn {
+  border-color: rgba(255, 204, 102, 0.35);
+  background: rgba(255, 204, 102, 0.10);
+}
+
+.fd-pill--danger {
+  border-color: rgba(255, 77, 125, 0.35);
+  background: rgba(255, 77, 125, 0.10);
+}
+
+/* ---------- Buttons ---------- */
+.fd-btn {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.9);
+  padding: 10px 12px;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: transform 0.12s ease, background 0.12s ease, border-color 0.12s ease;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.25);
+}
+
+.fd-btn:hover {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.18);
+  transform: translateY(-1px);
+}
+
+.fd-btn:active {
+  transform: translateY(0px);
+}
+
+.fd-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.fd-btn--primary {
+  border-color: rgba(109, 94, 252, 0.50);
+  background: linear-gradient(135deg, rgba(109, 94, 252, 0.92), rgba(57, 214, 255, 0.35));
+}
+
+.fd-btn--primary:hover {
+  border-color: rgba(109, 94, 252, 0.65);
+}
+
+.fd-btn--ghost {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: none;
+}
+
+.fd-btn--danger {
+  border-color: rgba(255, 77, 125, 0.45);
+  background: rgba(255, 77, 125, 0.16);
+}
+
+/* ---------- Inputs ---------- */
+.fd-input,
+.fd-textarea,
+.fd-select {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.92);
+  padding: 10px 12px;
+  border-radius: 14px;
+  outline: none;
+}
+
+.fd-input:focus,
+.fd-textarea:focus,
+.fd-select:focus {
+  border-color: rgba(109, 94, 252, 0.55);
+  box-shadow: 0 0 0 4px rgba(109, 94, 252, 0.18);
+}
+
+.fd-label {
+  font-size: 12px;
+  color: var(--muted);
+  display: grid;
+  gap: 6px;
+}
+
+/* ---------- Headings ---------- */
+h1 {
+  margin: 0;
+  font-size: 30px;
+  letter-spacing: -0.6px;
+}
+
+h2 {
+  margin: 0;
+  font-size: 16px;
+  letter-spacing: 0.1px;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.78);
+  line-height: 1.6;
+}
+
+/* ---------- Lists ---------- */
+.fd-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fd-item {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 16px;
+  padding: 12px 14px;
+  transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+}
+
+.fd-item:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.fd-item-title {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  font-weight: 650;
+}
+
+.fd-item-meta {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* ---------- Notification Bell Badge ---------- */
+/* .fd-bell {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fd-badge {
+  position: absolute;
+  top: -6px;
+  right: -10px;
+  background: radial-gradient(12px 12px at 30% 30%, rgba(255, 255, 255, 0.45), transparent 60%),
+    linear-gradient(135deg, rgba(255, 77, 125, 1), rgba(255, 204, 102, 0.65));
+  color: #1b0b12;
+  border-radius: 999px;
+  padding: 2px 7px;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 12px 26px rgba(255, 77, 125, 0.18);
+} */
+
+
+/* Bell */
+.fd-bell {
+  position: relative;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.92);
+  padding: 8px 10px;
+  border-radius: 12px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fd-bell:hover {
+  background: rgba(255,255,255,0.09);
+  border-color: rgba(255,255,255,0.18);
+}
+
+.fd-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 18px;
+  background: #ff4d7d;
+  color: white;
+  border: 2px solid rgba(7, 11, 24, 0.85);
+}
+
+/* Dropdown */
+.fd-dropdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 10px);
+  width: 420px;
+  max-width: calc(100vw - 24px);
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(7, 11, 24, 0.92);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 22px 70px rgba(0,0,0,0.45);
+  z-index: 200;
+}
+
+.fd-dropdown-head,
+.fd-dropdown-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.10);
+}
+
+.fd-dropdown-foot {
+  border-bottom: none;
+  border-top: 1px solid rgba(255,255,255,0.10);
+}
+
+.fd-link {
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: rgba(255,255,255,0.88);
+  text-decoration: underline;
+  cursor: pointer;
+  font: inherit;
+}
+
+.fd-dropdown-state {
+  padding: 12px 14px;
+  color: rgba(255,255,255,0.75);
+}
+
+.fd-dropdown-error {
+  padding: 12px 14px;
+  color: #ff4d7d;
+}
+
+/* Items */
+.fd-notif-list {
+  list-style: none;
+  margin: 0;
+  padding: 6px;
+  display: grid;
+  gap: 8px;
+}
+
+.fd-notif {
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.92);
+}
+
+.fd-notif.is-unread {
+  border-color: rgba(57,214,255,0.35);
+  background: rgba(57,214,255,0.10);
+}
+
+.fd-notif-title {
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.fd-notif-msg {
+  color: rgba(255,255,255,0.82);
+  margin-bottom: 6px;
+}
+
+.fd-notif-date {
+  font-size: 12px;
+  color: rgba(255,255,255,0.64);
+}
+
+
+
+
+/* ---------- Page Sections ---------- */
+.fd-hero {
+  padding: 18px 18px;
+  border-radius: var(--r-xl);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background:
+    radial-gradient(900px 400px at 10% 0%, rgba(109, 94, 252, 0.22), transparent 55%),
+    radial-gradient(700px 380px at 90% 20%, rgba(57, 214, 255, 0.16), transparent 52%),
+    rgba(255, 255, 255, 0.04);
+  box-shadow: var(--shadow-sm);
+}
+
+.fd-kpis {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 12px;
+}
+
+.fd-kpi {
+  grid-column: span 4;
+  border-radius: 18px;
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.fd-kpi strong {
+  font-size: 18px;
+}
+
+.fd-kpi small {
+  display: block;
+  margin-top: 6px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+@media (max-width: 900px) {
+  .fd-kpi {
+    grid-column: span 6;
+  }
+}
+
+@media (max-width: 560px) {
+  .fd-header-inner {
+    padding: 12px 14px;
+  }
+  .fd-shell {
+    padding: 14px;
+  }
+  .fd-kpi {
+    grid-column: span 12;
+  }
+  h1 {
+    font-size: 24px;
+  }
+}

@@ -12,3 +12,9 @@ export type AuthPrincipal = {
   orgId: string;
   role: string;
 };
+
+export type Principal = {
+  orgId: string;
+  userId: string;
+  role: string;
+};

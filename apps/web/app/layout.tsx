@@ -1,26 +1,35 @@
-import { NotificationBell } from '../components/NotificationBell';
+import NotificationBell from '../components/NotificationBell';
+import './globals.css'
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="fr">
       <body>
-        <div style={{ maxWidth: 1100, margin: '0 auto', padding: 24 }}>
-          <header style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, alignItems: 'center' }}>
-            <strong>FlowDesk</strong>
+        <header className="fd-header">
+          <div className="fd-header-inner">
+            <div className="fd-brand">
+              <a href="/">
+              <div className="fd-mark" />
+              <div className="fd-brand-title">
+                <strong>FlowDesk</strong>
+                <span>Decision Intelligence & Governance</span>
+              </div>
+              </a>
+            </div>
 
-            <nav style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-              <a href="/">Home</a>
-              <a href="/dashboard">Dashboard</a>
-              <a href="/initiatives">Initiatives</a>
-              <a href="/decisions">Decisions</a>
-              <a href="/ops/notifications">Ops</a>
+            <nav className="fd-nav">
+              {/* <a href="/">Home</a> */}
+              <a href="/about">About</a>
+              <a href="/contact">Contact</a>
+              {/* <a href="/decisions">Decisions</a> */}
+              {/* <a href="/ops/notifications">Ops</a> */}
               <a href="/login">Login</a>
               <NotificationBell />
             </nav>
-          </header>
+          </div>
+        </header>
 
-          {children}
-        </div>
+        <div className="fd-shell">{children}</div>
       </body>
     </html>
   );
