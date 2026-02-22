@@ -1,4 +1,5 @@
 import NotificationBell from '../components/NotificationBell';
+import { HeaderAuthButton } from './HeaderAuthButton';
 import './globals.css'
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -18,12 +19,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </div>
 
             <nav className="fd-nav">
-              {/* <a href="/">Home</a> */}
+              <a href="/">Home</a>
               <a href="/about">About</a>
               <a href="/contact">Contact</a>
               {/* <a href="/decisions">Decisions</a> */}
               {/* <a href="/ops/notifications">Ops</a> */}
-              <a href="/login">Login</a>
+              <HeaderAuthButton />
               <NotificationBell />
             </nav>
           </div>

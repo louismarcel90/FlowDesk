@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { apiFetch } from '../../../lib/api';
+import { pill } from '../page';
 
 export default function DecisionDetailPage() {
   const params = useParams<{ id: string }>();
@@ -64,7 +65,7 @@ export default function DecisionDetailPage() {
     <main style={{ display: 'grid', gap: 16 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
         <h1>{data.decision.title}</h1>
-        <span>{data.decision.status}</span>
+        <span style={{fontWeight: 'Bold'}} className={pill(data.decision.status)}>{data.decision.status}</span>
       </div>
 
       <section

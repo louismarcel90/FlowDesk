@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { apiFetch } from '../../lib/api';
+import { pill } from '../decisions/page';
 
 export default function DashboardPage() {
   const [decisions, setDecisions] = useState<any[]>([]);
@@ -28,7 +29,7 @@ export default function DashboardPage() {
         <h2>Recent Decisions</h2>
         <ul>
           {decisions.slice(0, 8).map((d) => (
-            <li key={d.id}><a href={`/decisions/${d.id}`}>{d.title}</a> — {d.status}</li>
+            <li key={d.id}><a href={`/decisions/${d.id}`}>{d.title}</a> — <span className={pill(d.status)}>{d.status}</span></li>
           ))}
         </ul>
       </section>
