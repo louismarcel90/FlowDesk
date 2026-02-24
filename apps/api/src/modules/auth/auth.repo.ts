@@ -8,14 +8,13 @@ export type DbUser = {
   displayName: string;
 };
 
-// Row "DB-shape" (snake_case) — doit matcher auth.routes.ts
+// Row "DB-shape" (snake_case) 
 export type RefreshRow = {
-  id: string; // jti
+  id: string; 
   org_id: string | null;
   user_id: string;
   token_hash: string;
   expires_at: Date;
-
   revoked_at?: Date | null;
   replaced_by?: string | null;
   last_used_at?: Date | null;
@@ -73,7 +72,7 @@ export function buildAuthRepo(sql: Sql) {
       return rows[0]?.role ?? null;
     },
 
-    // auth.routes.ts appelle ça avec une RefreshRow snake_case
+  
     async upsertRefreshToken(rt: RefreshRow): Promise<void> {
       await sql`
         insert into refresh_tokens (id, user_id, org_id, token_hash, expires_at)
@@ -86,9 +85,6 @@ export function buildAuthRepo(sql: Sql) {
       `;
     },
 
-    // IMPORTANT:
-    // - on filtre revoked_at et expires_at
-    // - on NE filtre PAS replaced_by, sinon tu perds l’erreur "already used" (rotation)
     async findValidRefreshToken(id: string): Promise<RefreshRow | null> {
       const rows = await sql<RefreshRow[]>`
         select
@@ -117,7 +113,6 @@ export function buildAuthRepo(sql: Sql) {
       `;
     },
 
-    // auth.routes.ts calls rotateRefreshToken({ oldId, newId, userId, orgId, newTokenHash, newExpiresAt })
     async rotateRefreshToken(params: {
       oldId: string;
       newId: string;

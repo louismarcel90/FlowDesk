@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { AppError } from '../../core/errors';
 import type { RequestContext } from '../../core/request-context';
 import { evaluate } from './opa.client';
-import type { PolicyEvalRepo } from './policyEvaluation.types'; // adapte le chemin
+import type { PolicyEvalRepo } from './policyEvaluation.types'; 
 
 export async function authorize(params: {
   ctx: RequestContext;

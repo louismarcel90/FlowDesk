@@ -30,16 +30,19 @@ import { buildPolicyEvalRepo } from '../modules/policy/policyEvaluation.repo';
 import { buildInAppRepo, InAppNotificationRow } from '../modules/notifications/inapp.repo';
 import { buildDlqRepo } from '../modules/ops/dlq.repo';
 
-
 declare module 'fastify' {
   interface FastifyRequest {
-    _startAt?: bigint;
+    _startAt?: bigint;  
   }
 }
 
 
 type AuthRoutesDeps = Parameters<typeof registerAuthRoutes>[1];
 type MeRoutesDeps = Parameters<typeof registerMeRoutes>[1];
+type InAppRoutesDeps = Parameters<typeof registerInAppNotificationRoutes>[1];
+type InAppRoutesRepo = InAppRoutesDeps["inAppRepo"];
+type DecisionDeps = Parameters<typeof registerDecisionRoutes>[1];
+
 
 
 export async function buildApp() {
@@ -78,18 +81,13 @@ export async function buildApp() {
   const audit = buildAuditService(auditRepo);
   const impactRepo = buildImpactRepo(sql)
   const dlqRepo = buildDlqRepo(sql);
-
-
   const inAppRepo = buildInAppRepo(sql);
-  const inAppRepoAdapter: Parameters<typeof registerInAppNotificationRoutes>[1]['inAppRepo'] = {
-    unreadCount: async (userId: string) =>
+
+  const inAppRepoForRoutes = {
+  unreadCount: async (userId: string) =>
     Number(await inAppRepo.unreadCount(userId)),
 
-  listInbox: async (
-    userId: string,
-    limit: number,
-    cursor?: string
-  ) => {
+  listInbox: async (userId: string, limit: number, cursor?: string) => {
     const rows = await inAppRepo.listInbox(userId, limit, cursor);
     const array = Array.from(rows) as InAppNotificationRow[];
 
@@ -101,16 +99,18 @@ export async function buildApp() {
       entityType: r.entityType ?? null,
       entityId: r.entityId ?? null,
       createdAt: (r.createdAt ?? new Date()).toISOString(),
-      readAt: r.readAt ?? null,
+      readAt: r.readAt ? new Date(r.readAt).toISOString() : null,
     }));
   },
 
-  markRead: (userId: string, id: string) =>
-    inAppRepo.markRead(userId, id),
+  markRead: (userId: string, id: string) => inAppRepo.markRead(userId, id),
+  markAllRead: (userId: string) => inAppRepo.markAllRead(userId),
+} satisfies InAppRoutesRepo;
 
-  markAllRead: (userId: string) =>
-    inAppRepo.markAllRead(userId),
-};
+const inAppRepoForDecisions = {
+  insert: (row) => inAppRepo.insert(row),
+  unreadCount: (userId: string) => inAppRepo.unreadCount(userId),
+} satisfies DecisionDeps["inAppRepo"];
 
   const sseHub = new SSEHub();
 
@@ -164,8 +164,19 @@ export async function buildApp() {
       policyEvalRepo,
       audit,
       outboxRepo,
+      inAppRepo: inAppRepoForDecisions,
+      sseHub,
     }),
   );
+
+  await app.register(async (a) =>
+  registerInAppNotificationRoutes(a, {
+    authRepo,
+    policyEvalRepo,
+    inAppRepo: inAppRepoForRoutes, 
+    sseHub,
+  })
+);
 
   await app.register(async (a) =>
     registerImpactRoutes(a, {
@@ -210,8 +221,6 @@ export async function buildApp() {
   // --- routes
   await app.register(async (a) => registerHealthRoutes(a, { sql, redis }));
   await app.register(async (a) => registerAuthRoutes(a, { authRepo, audit }));
-  await app.register(async (a) => registerInAppNotificationRoutes(a, { authRepo, policyEvalRepo, inAppRepo: inAppRepoAdapter, sseHub })
-);
 
   app.register(async (a) =>
     registerMeRoutes(a, {
@@ -236,9 +245,6 @@ app.addHook('onResponse', async (req, reply) => {
     .observe(durationMs);
 });
 
-
-
-
   // --- shutdown
   app.addHook('onClose', async () => {
     await redis.quit().catch(() => undefined);
@@ -247,3 +253,5 @@ app.addHook('onResponse', async (req, reply) => {
 
   return app;
 }
+
+

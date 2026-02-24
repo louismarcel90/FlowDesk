@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { apiFetch } from '../../lib/api';
+import {statusLabel, badgeStyle} from './[id]/page'
 
 export function pill(status: string) {
   if (status === 'approved') return 'fd-pill fd-pill--success';
@@ -26,7 +27,6 @@ export default function DecisionsPage() {
          <a href="/decisions/new" className="fd-btn fd-btn--primary" >
           Create decision
         </a>
-        {/* <a className="fd-btn fd-btn--primary" href="/dashboard">Dashboard</a> */}
       </div>
 
       {error && <div className="fd-card"><div className="fd-card-inner" style={{ color: 'var(--danger)' }}>{error}</div></div>}
@@ -38,7 +38,7 @@ export default function DecisionsPage() {
           <li key={d.id} className="fd-item">
             <div className="fd-item-title">
               <a href={`/decisions/${d.id}`}>{d.title}</a>
-              <span className={pill(d.status)}>{d.status}</span>
+                <span style={badgeStyle(d.status)}>{statusLabel(d.status)}</span>
             </div>
             <div className="fd-item-meta">
               Created: {new Date(d.createdAt).toLocaleString("en-US", {

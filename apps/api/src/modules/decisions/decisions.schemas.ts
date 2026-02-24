@@ -1,8 +1,14 @@
 import { z } from 'zod';
+import { DECISION_STATUSES, type DecisionStatus } from "./decisions.types";
 
-export const DecisionStatus = z.enum(['draft', 'approved', 'deprecated']);
 
+export const DecisionStatusSchema = z
+  .enum(DECISION_STATUSES) satisfies z.ZodType<DecisionStatus>;
 const AnyRecord = z.record(z.string(), z.any());
+
+export const UpdateDecisionStatusSchema = z.object({
+  status: DecisionStatusSchema,
+});
 
 export const DecisionVersionPayload = z.object({
   context: AnyRecord.default({}),
@@ -14,7 +20,7 @@ export const DecisionVersionPayload = z.object({
 });
 
 export type DecisionVersionPayload = z.infer<typeof DecisionVersionPayload>;
-export type DecisionStatus = z.infer<typeof DecisionStatus>;
+// export type DecisionStatus = z.infer<typeof DecisionStatus>;
 
 export const CreateDecisionSchema = z.object({
   title: z.string().min(3),

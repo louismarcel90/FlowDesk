@@ -1,4 +1,5 @@
 import type { Sql } from '../../db/client';
+import type { DbUser } from '../auth/auth.repo';
 
 export type InAppNotificationRow = {
   id: string;
@@ -14,6 +15,8 @@ export type InAppNotificationRow = {
   createdAt: Date;
   readAt: Date | null;
 };
+
+
 
 export function buildInAppRepo(sql: Sql) {
   return {
@@ -91,7 +94,7 @@ export function buildInAppRepo(sql: Sql) {
       userId: string;
       type: 'decision.approved' | 'decision.rejected' | 'comment.mentioned' | 'comment.posted' | string;
       title: 'Decision approved' | 'Decision rejected' | 'Mentioned in comment' | 'New comment' | string;
-      body: `Decision "${InAppNotificationRow['title']}" was approved' | 'Decision "Should we adopt X?" was rejected' | 'You were mentioned in a comment' | 'A new comment was posted` | string;
+      body: `Decision "${InAppNotificationRow['title']}" was approved' | 'Decision "${InAppNotificationRow['title']}" was rejected' | 'You were mentioned in a comment' | '${DbUser['displayName']} comment on ${InAppNotificationRow['title']}` | string;
       entityType: string | null;
       entityId: string | null;
       sourceEventId: string;

@@ -51,9 +51,14 @@ export async function registerOpsRoutes(
 });
 
   // GET /admin/notifications/dlq
-  app.get('/admin/notifications/dlq', { preHandler: [auth] }, async (req) => {
+  app.get('/admin/notifications/dlq', { preHandler: [auth] }, async (req, res) => {
     const ctx = (req).ctx as RequestContext;
     const principal = (req).principal;
+
+    if (!principal) {
+          res.code(401).send({ error: "Unauthorized" });
+          return;
+        }
 
     await authorize({
       ctx,
@@ -68,10 +73,15 @@ export async function registerOpsRoutes(
   });
 
   // POST /admin/notifications/dlq/:id/reprocess
-  app.post<{Params:{id: string}}>('/admin/notifications/dlq/:id/reprocess', { preHandler: [auth] }, async (req) => {
+  app.post<{Params:{id: string}}>('/admin/notifications/dlq/:id/reprocess', { preHandler: [auth] }, async (req, res) => {
     const ctx = (req).ctx as RequestContext;
     const principal = (req).principal;
     const id = req.params.id;
+
+    if (!principal) {
+          res.code(401).send({ error: "Unauthorized" });
+          return;
+        }
 
     await authorize({
       ctx,

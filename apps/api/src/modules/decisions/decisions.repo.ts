@@ -1,47 +1,23 @@
-import type { Sql } from '../../db/client';
+// apps/api/src/modules/decisions/decisions.repo.ts
+
+import type { Sql } from "../../db/client";
+
 import {
-  DecisionStatus as DecisionStatusSchema,
+  DecisionStatusSchema,
   DecisionVersionPayload as DecisionVersionPayloadSchema,
-} from './decisions.schemas';
+} from "./decisions.schemas";
+
+
 import type {
+  Decision,
+  DecisionComment,
+  // DecisionCommentRaw,
+  DecisionListItem,
+  DecisionsRepo,
   DecisionStatus,
+  DecisionVersion,
   DecisionVersionPayload,
-} from './decisions.schemas';
-
-export type Decision = {
-  id: string;
-  orgId: string;
-  title: string;
-  status: DecisionStatus;
-  createdBy: string;
-  createdAt: Date;
-  approvedBy: string | null;
-  approvedAt: Date | null;
-};
-
-export type DecisionListItem = {
-  id: string;
-  title: string;
-  status: DecisionStatus;
-  createdAt: Date;
-  approvedAt: Date | null;
-};
-
-export type DecisionVersion = {
-  id: string;
-  decisionId: string;
-  version: number;
-  createdBy: string;
-  payload: DecisionVersionPayload;
-};
-
-export type DecisionComment = {
-  id: string;
-  decisionId: string;
-  createdBy: string;
-  createdAt: Date;
-  body: string;
-};
+} from "./decisions.types";
 
 type DbDecisionRow = {
   id: string;
@@ -67,7 +43,7 @@ type DbDecisionVersionRow = {
   decision_id: string;
   version: number;
   created_by: string;
-  created_at: string;
+  created_at: string; // dans ton fichier c’était string
   context: unknown;
   options: unknown;
   tradeoffs: unknown;
@@ -76,29 +52,24 @@ type DbDecisionVersionRow = {
   outcome: unknown;
 };
 
-type DbDecisionCommentRow = {
-  id: string;
-  decision_id: string;
-  created_by: string;
-  created_at: Date;
-  body: string;
-};
+// type DbDecisionCommentRow = {
+//   id: string;
+//   decision_id: string;
+//   created_by: string;
+//   created_at: Date;
+//   body: string;
+// };
 
-export function buildDecisionsRepo(sql: Sql) {
+export function buildDecisionsRepo(sql: Sql): DecisionsRepo {
   return {
-    async createDecision(params: {
-      id: string;
-      orgId: string;
-      title: string;
-      createdBy: string;
-    }): Promise<void> {
+    async createDecision(input): Promise<void> {
       await sql`
         insert into decisions (id, org_id, title, status, created_by)
-        values (${params.id}, ${params.orgId}, ${params.title}, 'draft', ${params.createdBy})
+        values (${input.id}, ${input.orgId}, ${input.title}, 'draft', ${input.createdBy})
       `;
     },
 
-    async createVersion(params: {
+    async createVersion(input: {
       id: string;
       decisionId: string;
       version: number;
@@ -109,13 +80,13 @@ export function buildDecisionsRepo(sql: Sql) {
         insert into decision_versions
           (id, decision_id, version, created_by, context, options, tradeoffs, assumptions, risks, outcome)
         values
-          (${params.id}, ${params.decisionId}, ${params.version}, ${params.createdBy},
-           ${sql.json(params.payload.context)},
-           ${sql.json(params.payload.options)},
-           ${sql.json(params.payload.tradeoffs)},
-           ${sql.json(params.payload.assumptions)},
-           ${sql.json(params.payload.risks)},
-           ${sql.json(params.payload.outcome)})
+          (${input.id}, ${input.decisionId}, ${input.version}, ${input.createdBy},
+           ${sql.json(input.payload.context)},
+           ${sql.json(input.payload.options)},
+           ${sql.json(input.payload.tradeoffs)},
+           ${sql.json(input.payload.assumptions)},
+           ${sql.json(input.payload.risks)},
+           ${sql.json(input.payload.outcome)})
       `;
     },
 
@@ -140,24 +111,20 @@ export function buildDecisionsRepo(sql: Sql) {
       return rows.map((r) => ({
         id: r.id,
         title: r.title,
-        status: DecisionStatusSchema.parse(r.status),
-        createdAt: r.created_at.toISOString() as unknown as Date,
-        approvedAt: r.approved_at
-          ? (r.approved_at.toISOString() as unknown as Date)
-          : null,
+        status: DecisionStatusSchema.parse(r.status) as DecisionStatus,
+        createdAt: r.created_at,
+        approvedAt: r.approved_at,
       }));
     },
 
-    async getDecision(
-      decisionId: string,
-      orgId: string,
-    ): Promise<Decision | null> {
+    async getDecision(decisionId: string, orgId: string): Promise<Decision | null> {
       const rows = await sql<DbDecisionRow[]>`
         select *
         from decisions
         where id = ${decisionId} and org_id = ${orgId}
         limit 1
       `;
+
       const r = rows[0];
       if (!r) return null;
 
@@ -165,13 +132,11 @@ export function buildDecisionsRepo(sql: Sql) {
         id: r.id,
         orgId: r.org_id,
         title: r.title,
-        status: DecisionStatusSchema.parse(r.status),
+        status: DecisionStatusSchema.parse(r.status) as DecisionStatus,
         createdBy: r.created_by,
-        createdAt: r.created_at.toISOString() as unknown as Date,
+        createdAt: r.created_at,
         approvedBy: r.approved_by,
-        approvedAt: r.approved_at
-          ? (r.approved_at.toISOString() as unknown as Date)
-          : null,
+        approvedAt: r.approved_at,
       };
     },
 
@@ -191,61 +156,115 @@ export function buildDecisionsRepo(sql: Sql) {
           assumptions: r.assumptions,
           risks: r.risks,
           outcome: r.outcome,
-        });
+        }) as DecisionVersionPayload;
 
         return {
           id: r.id,
           decisionId: r.decision_id,
           version: r.version,
           createdBy: r.created_by,
-          createdAt: new Date(r.created_at).toISOString() as unknown as Date,
+          createdAt: new Date(r.created_at),
           payload,
         };
       });
     },
 
-    async addComment(params: {
-      id: string;
-      decisionId: string;
-      createdBy: string;
-      body: string;
-    }): Promise<void> {
+    async addComment(input): Promise<void> {
       await sql`
         insert into decision_comments (id, decision_id, created_by, body)
-        values (${params.id}, ${params.decisionId}, ${params.createdBy}, ${params.body})
+        values (${input.id}, ${input.decisionId}, ${input.createdBy}, ${input.body})
       `;
     },
+
+    // async getComments(decisionId: string): Promise<(DecisionComment | DecisionCommentRaw)[]> {
+    //   const rows = await sql<DbDecisionCommentRow[]>`
+    //     select id, decision_id, created_by, created_at, body
+    //     from decision_comments
+    //     where decision_id = ${decisionId}
+    //     order by created_at asc
+    //   `;
+
+    //   // Pas d’enrichissement pour l’instant → raw
+    //   return rows.map((r) => ({
+    //     id: r.id,
+    //     decisionId: r.decision_id,
+    //     createdBy: r.created_by,
+    //     createdAt: r.created_at,
+    //     body: r.body,
+    //   }));
+    // },
 
     async getComments(decisionId: string): Promise<DecisionComment[]> {
-      const rows = await sql<DbDecisionCommentRow[]>`
-        select id, decision_id, created_by, created_at, body
-        from decision_comments
-        where decision_id = ${decisionId}
-        order by created_at asc
-      `;
+  const rows = await sql<{
+    id: string;
+    decision_id: string;
+    created_at: Date;
+    body: string;
+    user_id: string;
+    display_name: string | null;
+    role: string | null;
+  }[]>`
+    select 
+      c.id,
+      c.decision_id,
+      c.created_at,
+      c.body,
+      u.id as user_id,
+      u.display_name,
+      m.role
+    from decision_comments c
+    join users u on u.id = c.created_by
+    left join memberships m 
+      on m.user_id = u.id
+    where c.decision_id = ${decisionId}
+    order by c.created_at asc
+  `;
 
-      return rows.map((r) => ({
-        id: r.id,
-        decisionId: r.decision_id,
-        createdBy: r.created_by,
-        createdAt: r.created_at.toISOString() as unknown as Date,
-        body: r.body,
-      }));
+  return rows.map((r) => ({
+    id: r.id,
+    decisionId: r.decision_id,
+    createdAt: r.created_at,
+    body: r.body,
+    author: {
+      userId: r.user_id,
+      displayName: r.display_name,
+      role: r.role,
     },
+  }));
+},
 
-    async approveDecision(params: {
-      decisionId: string;
-      approvedBy: string;
-      orgId: string;
-    }): Promise<void> {
+    async approveDecision(input): Promise<void> {
       await sql`
         update decisions
         set status = 'approved',
-            approved_by = ${params.approvedBy},
+            approved_by = ${input.approvedBy},
             approved_at = now()
-        where id = ${params.decisionId}
-          and org_id = ${params.orgId}
+        where id = ${input.decisionId}
+          and org_id = ${input.orgId}
           and status = 'draft'
+      `;
+    },
+
+    async updateDecisionStatus(input): Promise<void> {
+      // Si approved → set approved_by/approved_at
+      if (input.status === "approved") {
+        await sql`
+          update decisions
+          set status = ${input.status},
+              approved_by = ${input.changedBy},
+              approved_at = now()
+          where id = ${input.decisionId}
+            and org_id = ${input.orgId}
+        `;
+        return;
+      }
+
+      // Sinon: update status only (ne wipe pas approved fields)
+      await sql`
+        update decisions
+        set status = ${input.status}
+        where id = ${input.decisionId}
+          and org_id = ${input.orgId}
       `;
     },
   };

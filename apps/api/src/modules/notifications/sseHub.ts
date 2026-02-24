@@ -1,27 +1,29 @@
-import { JSONValue } from 'postgres';
+export type SSEPayload = {
+  type: string;
+  [k: string]: unknown;
+};
+
+type Listener = (payload: SSEPayload) => void;
 
 export class SSEHub {
-  private clients = new Map<string, Set<(data: string) => void>>();
+  private clients = new Map<string, Set<Listener>>();
 
-  subscribe(userId: string, write: (data: string) => void) {
+  subscribe(userId: string, listener: Listener): () => void {
     if (!this.clients.has(userId)) this.clients.set(userId, new Set());
-    this.clients.get(userId)!.add(write);
+    this.clients.get(userId)!.add(listener);
 
     return () => {
       const set = this.clients.get(userId);
       if (!set) return;
-      set.delete(write);
+      set.delete(listener);
       if (set.size === 0) this.clients.delete(userId);
     };
   }
 
-  publish(userId: string, event: { type: string; unreadCount?: number }) {
+  publish(userId: string, payload: SSEPayload): void {
     const listeners = this.clients.get(userId);
     if (!listeners) return;
 
-    const payload: JSONValue = event as unknown as JSONValue;
-    const sse = `data: ${JSON.stringify(payload)}\n\n`;
-
-    for (const write of listeners) write(sse);
+    for (const fn of listeners) fn(payload);
   }
 }

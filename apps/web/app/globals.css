@@ -881,6 +881,13 @@ select.fd-input {
   color: rgba(255, 120, 160, 0.98);
 }
 
+/* Premium textarea focus (comments) */
+textarea:focus {
+  border-color: rgba(109, 94, 252, 0.55) !important;
+  box-shadow:
+    0 0 0 1px rgba(109, 94, 252, 0.35),
+    0 18px 44px rgba(0, 0, 0, 0.32) !important;
+}
 
 /* =============
     Initiatives
