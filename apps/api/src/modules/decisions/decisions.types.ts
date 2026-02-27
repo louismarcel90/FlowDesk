@@ -1,7 +1,6 @@
-// apps/api/src/modules/decisions/decisions.types.ts
-
 import { JSONValue } from "postgres";
 
+// Decision status
 export const DECISION_STATUSES = [
   "draft",
   "proposed",
@@ -12,6 +11,62 @@ export const DECISION_STATUSES = [
 ] as const;
 
 export type DecisionStatus = (typeof DECISION_STATUSES)[number];
+
+// Decision/Initiative notifications
+export const NOTIF_TYPES = {
+  DECISION_CREATED: "DECISION_CREATED",
+  DECISION_STATUS_CHANGED: "DECISION_STATUS_CHANGED",
+  INITIATIVE_CREATED: "INITIATIVE_CREATED",
+} as const;
+
+export type NotifType = typeof NOTIF_TYPES[keyof typeof NOTIF_TYPES];
+
+// ---------------------------------------------
+// Notifications
+// ---------------------------------------------
+
+export type Notification = {
+  id: string;
+  orgId: string;
+
+  type: NotifType;
+
+  title: string;
+  message: string;
+
+  createdBy: string;
+  createdAt: Date;
+
+  isRead: boolean;
+
+  meta?: JSONValue | null; 
+};
+
+export type NotificationsRepo = {
+  listNotifications(orgId: string): Promise<Notification[]>;
+
+  create(input: {
+    id: string;
+    orgId: string;
+
+    type: NotifType;
+
+    title: string;
+    message: string;
+
+    createdBy: string;
+    createdAt: Date;
+
+    isRead: boolean;
+
+    meta?: JSONValue | null;
+  }): Promise<void>;
+
+  markAsRead(notificationId: string, orgId: string): Promise<void>;
+
+  markAllAsRead(orgId: string): Promise<void>;
+};
+
 
 export type DecisionVersionPayload = {
   context: JSONValue;

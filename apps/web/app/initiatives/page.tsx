@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { apiFetch } from '../../lib/api';
+import { Decision } from '../../../api/src/modules/decisions/decisions.types';
+import Link from 'next/link';
 
 type Initiative = {
   id: string;
@@ -9,6 +11,7 @@ type Initiative = {
   description?: string | null;
   status: string;
   createdAt?: string;
+  decision?: Decision
 };
 
 function formatDate(d?: string) {
@@ -205,21 +208,34 @@ export default function InitiativesPage() {
           ) : (
             <ul className="fd-list">
               {items.map((i) => (
-                <li key={i.id} className="fd-list-item">
+                <li key={i.id ?? i.name} className="fd-list-item">
                   <div className="fd-list-main">
-                    <a className="fd-item-title" href={`/initiatives/${i.id}`}>
-                      {i.name}
-                    </a>
+                    {i.id ? (
+                      <Link className="fd-item-title" href={`/initiatives/${i.id}`}>
+                        {i.name}
+                      </Link>
+                    ) : (
+                      <span className="fd-item-title">{i.name}</span>
+                  )}
                     {i.description ? (
                       <div className="fd-item-subtitle">{i.description}</div>
                     ) : null}
                     <div className="fd-item-meta">
-                      <span className="fd-chip">{i.id}</span>
-                      {i.createdAt ? (
+                      <div>
+                        <span className="fd-chip">{i.id}</span>
+                      </div>
+                      <div>
+                        <span className="fd-meta">
+                          {i.decision?.title ?? "no decision linked"}
+                        </span>
+                      </div>
+                     {i.createdAt && (
+                      <div>
                         <span className="fd-meta">
                           Created {formatDate(i.createdAt)}
                         </span>
-                      ) : null}
+                      </div>
+                     )}     
                     </div>
                   </div>
 

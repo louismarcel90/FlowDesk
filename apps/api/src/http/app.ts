@@ -29,6 +29,7 @@ import { buildAuthRepo } from '../modules/auth/auth.repo';
 import { buildPolicyEvalRepo } from '../modules/policy/policyEvaluation.repo';
 import { buildInAppRepo, InAppNotificationRow } from '../modules/notifications/inapp.repo';
 import { buildDlqRepo } from '../modules/ops/dlq.repo';
+import { NotificationsRepo } from '../modules/decisions/decisions.types';
 
 declare module 'fastify' {
   interface FastifyRequest {
@@ -56,7 +57,7 @@ export async function buildApp() {
         : { level: env.LOG_LEVEL },
   });
   
-  app.decorateRequest('principal', undefined);
+  app.decorateRequest('principal');
   app.decorateRequest('ctx')
 
 
@@ -165,9 +166,10 @@ const inAppRepoForDecisions = {
       audit,
       outboxRepo,
       inAppRepo: inAppRepoForDecisions,
+      notificationsRepo: inAppRepoForDecisions as unknown as NotificationsRepo,
       sseHub,
     }),
-  );
+);
 
   await app.register(async (a) =>
   registerInAppNotificationRoutes(a, {

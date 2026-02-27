@@ -25,7 +25,7 @@ export type AuthPrincipal = {
 // Ajoute req.principal dans FastifyRequest (runtime: on le set dans authenticate)
 declare module 'fastify' {
   interface FastifyRequest {
-    principal?: AuthPrincipal;
+    principal: AuthPrincipal;
   }
 }
 

@@ -2,7 +2,6 @@ import type { Sql } from '../../db/client';
 
 export type InitiativeStatus = "draft" | "active" | "archived";
 
-
 export type Initiative = {
   id: string;
   orgId: string;
@@ -25,7 +24,7 @@ type DbInitiativeRow = {
 
 type DbMetricRow = {
   id: string;
-  initiative_id: string;
+  initiativeId: string;
   name: string;
   unit: string;
   direction: string;
@@ -158,18 +157,19 @@ export function buildImpactRepo(sql: Sql) {
       `;
     },
 
-    async listMetrics(orgId: string): Promise<MetricListItem[]> {
+    async listMetrics(orgId: string, opts?: { initiativeId?: string }): Promise<MetricListItem[]> {
   const rows = await sql<DbMetricRow[]>`
     select id, initiative_id, name, unit, direction, created_at
     from metrics
     where org_id = ${orgId}
+    ${opts?.initiativeId ? sql`and initiative_id = ${opts.initiativeId}` : sql``}
     order by created_at desc
     limit 200
   `;
 
   return rows.map((r) => ({
     id: r.id,
-    initiativeId: r.initiative_id,
+    initiativeId: r.initiativeId,
     name: r.name,
     unit: r.unit,
     direction: r.direction,
@@ -177,17 +177,19 @@ export function buildImpactRepo(sql: Sql) {
   }));
 },
 
-    async listMetricsByInitiative(initiativeId: string): Promise<MetricListItem[]> {
+async listMetricsByInitiative(orgId: string, initiativeId: string): Promise<MetricListItem[]> {
   const rows = await sql<DbMetricRow[]>`
     select id, initiative_id, name, unit, direction, created_at
     from metrics
-    where initiative_id = ${initiativeId}
+    where org_id = ${orgId}
+      and initiative_id = ${initiativeId}
     order by created_at desc
+    limit 200
   `;
 
   return rows.map((r) => ({
     id: r.id,
-    initiativeId: r.initiative_id,
+    initiativeId: r.initiativeId,
     name: r.name,
     unit: r.unit,
     direction: r.direction,
@@ -250,7 +252,7 @@ export function buildImpactRepo(sql: Sql) {
 },
 
     async listDecisionsForInitiative(initiativeId: string): Promise<DecisionListItem[]> {
-  const rows = await sql<DbDecisionListRow[]>`
+    const rows = await sql<DbDecisionListRow[]>`
     select d.id, d.title, d.status, d.created_at
     from decision_links l
     join decisions d on d.id = l.decision_id

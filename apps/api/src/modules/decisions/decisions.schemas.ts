@@ -20,7 +20,6 @@ export const DecisionVersionPayload = z.object({
 });
 
 export type DecisionVersionPayload = z.infer<typeof DecisionVersionPayload>;
-// export type DecisionStatus = z.infer<typeof DecisionStatus>;
 
 export const CreateDecisionSchema = z.object({
   title: z.string().min(3),

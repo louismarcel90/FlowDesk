@@ -1,5 +1,3 @@
-// apps/api/src/modules/decisions/decisions.repo.ts
-
 import type { Sql } from "../../db/client";
 
 import {
@@ -7,11 +5,9 @@ import {
   DecisionVersionPayload as DecisionVersionPayloadSchema,
 } from "./decisions.schemas";
 
-
 import type {
   Decision,
   DecisionComment,
-  // DecisionCommentRaw,
   DecisionListItem,
   DecisionsRepo,
   DecisionStatus,
@@ -43,7 +39,7 @@ type DbDecisionVersionRow = {
   decision_id: string;
   version: number;
   created_by: string;
-  created_at: string; // dans ton fichier c’était string
+  created_at: string; 
   context: unknown;
   options: unknown;
   tradeoffs: unknown;
@@ -51,14 +47,6 @@ type DbDecisionVersionRow = {
   risks: unknown;
   outcome: unknown;
 };
-
-// type DbDecisionCommentRow = {
-//   id: string;
-//   decision_id: string;
-//   created_by: string;
-//   created_at: Date;
-//   body: string;
-// };
 
 export function buildDecisionsRepo(sql: Sql): DecisionsRepo {
   return {
@@ -175,24 +163,6 @@ export function buildDecisionsRepo(sql: Sql): DecisionsRepo {
         values (${input.id}, ${input.decisionId}, ${input.createdBy}, ${input.body})
       `;
     },
-
-    // async getComments(decisionId: string): Promise<(DecisionComment | DecisionCommentRaw)[]> {
-    //   const rows = await sql<DbDecisionCommentRow[]>`
-    //     select id, decision_id, created_by, created_at, body
-    //     from decision_comments
-    //     where decision_id = ${decisionId}
-    //     order by created_at asc
-    //   `;
-
-    //   // Pas d’enrichissement pour l’instant → raw
-    //   return rows.map((r) => ({
-    //     id: r.id,
-    //     decisionId: r.decision_id,
-    //     createdBy: r.created_by,
-    //     createdAt: r.created_at,
-    //     body: r.body,
-    //   }));
-    // },
 
     async getComments(decisionId: string): Promise<DecisionComment[]> {
   const rows = await sql<{

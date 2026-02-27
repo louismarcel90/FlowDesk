@@ -160,6 +160,7 @@ export async function registerInAppNotificationRoutes(
       return reply.code(statusCode).send({ error: { message } });
     }
   });
+  
 
   // GET /notifications/stream  (SSE)
   app.get("/notifications/stream", { preHandler: [auth] }, async (req: FastifyRequest, reply: FastifyReply) => {
@@ -175,7 +176,7 @@ export async function registerInAppNotificationRoutes(
       "X-Accel-Buffering": "no",
       "Access-Control-Allow-Credentials": "true",
       "Access-Control-Allow-Origin": req.headers.origin ?? "http://localhost:3000",
-      Vary: "Origin",
+      "Vary": "Origin",
     });
 
     // keep open forever

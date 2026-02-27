@@ -15,7 +15,7 @@ import {
 import { registerMeRoutes } from '../auth/me.routes';
 import { registerAuthRoutes } from '../auth/auth.routes';
 import { Role } from '../auth/auth.types';
-
+import { z } from 'zod';
 
 type AuthRoutesDeps = Parameters<typeof registerAuthRoutes>[1];
 type MeRoutesDeps = Parameters<typeof registerMeRoutes>[1];
@@ -114,10 +114,67 @@ export async function registerImpactRoutes(app: FastifyInstance, deps: Deps) {
     if (!initiative) throw new AppError('NOT_FOUND', 'Initiative not found', 404);
 
     const decisions = await deps.impactRepo.listDecisionsForInitiative(id);
-    const metrics = await deps.impactRepo.listMetricsByInitiative(id);
+    const metrics = await deps.impactRepo.listMetricsByInitiative(principal.orgId, id);
 
     return { initiative, decisions, metrics };
   });
+
+  // Link initiative -> decision
+const LinkInitiativeDecisionSchema = z.object({
+  decisionId: z.string().uuid(),
+});
+
+app.post<{ Params: { id: string } }>(
+  '/impact/initiatives/:id/links',
+  { preHandler: [auth] },
+  async (req) => {
+    const ctx = req.ctx as RequestContext;
+    const principal = req.principal!;
+    const { id: initiativeId } = req.params;
+    const body = LinkInitiativeDecisionSchema.parse(req.body);
+
+    if (!principal) throw new AppError('UNAUTHORIZED', 'Not authenticated', 401);
+
+    // 1) initiative.read 
+    await authorize({
+      ctx,
+      principal,
+      action: 'initiative.read',
+      resource: { type: 'initiative', id: initiativeId, orgId: principal.orgId },
+      policyEvalRepo: deps.policyEvalRepo,
+    });
+
+    // 2) decision.link 
+    await authorize({
+      ctx,
+      principal,
+      action: 'decision.link',
+      resource: { type: 'decision', id: body.decisionId, orgId: principal.orgId },
+      policyEvalRepo: deps.policyEvalRepo,
+    });
+
+    const initiative = await deps.impactRepo.getInitiative(principal.orgId, initiativeId);
+    if (!initiative) throw new AppError('NOT_FOUND', 'Initiative not found', 404);
+
+    await deps.impactRepo.linkDecision({
+      id: randomUUID(),
+      orgId: principal.orgId,
+      decisionId: body.decisionId,
+      initiativeId,
+      createdBy: principal.userId,
+    });
+
+    await deps.audit.log(ctx, {
+      actorUserId: principal.userId,
+      action: 'DECISION_LINKED',
+      entityType: 'initiative',
+      entityId: initiativeId,
+      payload: { decisionId: body.decisionId },
+    });
+
+    return { ok: true };
+  }
+);
 
   // METRICS
   app.get('/metrics', { preHandler: [auth] }, async (req) => {
@@ -132,6 +189,10 @@ export async function registerImpactRoutes(app: FastifyInstance, deps: Deps) {
       resource: { type: 'metric', id: '*', orgId: principal.orgId },
       policyEvalRepo: deps.policyEvalRepo
     });
+    const { initiativeId } = req.query as { initiativeId?: string };
+    if (initiativeId) {
+      return deps.impactRepo.listMetricsByInitiative(principal.orgId, initiativeId);
+    }
 
     return deps.impactRepo.listMetrics(principal.orgId);
   });

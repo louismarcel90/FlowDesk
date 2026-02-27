@@ -1,29 +1,37 @@
 'use client';
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { apiFetch } from "../../../lib/api"; // adapte si besoin
 import Link from "next/link";
 
 type Props = { id: string };
 
 export default function InitiativeDetailClient({ id }: Props) {
+
   const [data, setData] = useState<any>(null);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    let cancelled = false;
+useEffect(() => {
+  let cancelled = false;
 
-    apiFetch(`/initiatives/${id}`)
-      .then((json) => {
-        if (!cancelled) setData(json);
-      })
-      .catch((e) => {
-        if (!cancelled) setError(String(e?.message ?? e));
-      });
+  (async () => {
+    try {
+      const initiativeJson = await apiFetch(`/impact/initiatives/${id}`);
 
-    return () => {
-      cancelled = true;
-    };
-  }, [id]);
+      const metricsJson = await apiFetch(`/impact/metrics?initiativeId=${encodeURIComponent(id)}`);
+
+      if (!cancelled) {
+        setData({ ...initiativeJson, metrics: metricsJson });
+        setError(null);
+      }
+    } catch (e: any) {
+      if (!cancelled) setError(String(e?.message ?? e));
+    }
+  })();
+
+  return () => {
+    cancelled = true;
+  };
+}, [id]);
 
   if (error) return <main><p style={{ color: "crimson" }}>{error}</p></main>;
   if (!data) return <main><p>Loading...</p></main>;
@@ -49,7 +57,7 @@ export default function InitiativeDetailClient({ id }: Props) {
         <ul>
           {(data.metrics ?? []).map((m: any) => (
             <li key={m.id}>
-              <Link href={`/impact/metrics/${m.id}`}>{m.name}</Link>
+              <Link href={`/metrics/${m.id}`}>{m.name}</Link>
             </li>
           ))}
         </ul>

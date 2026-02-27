@@ -5,6 +5,7 @@ type PageProps = {
 };
 
 export default async function InitiativeDetailPage({ params }: PageProps) {
-  const { id } = await params; 
+  const { id } = await params;
+  if (!id) return null;
   return <InitiativeDetailClient id={id} />;
 }

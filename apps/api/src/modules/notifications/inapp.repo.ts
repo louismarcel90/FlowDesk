@@ -94,7 +94,8 @@ export function buildInAppRepo(sql: Sql) {
       userId: string;
       type: 'decision.approved' | 'decision.rejected' | 'comment.mentioned' | 'comment.posted' | string;
       title: 'Decision approved' | 'Decision rejected' | 'Mentioned in comment' | 'New comment' | string;
-      body: `Decision "${InAppNotificationRow['title']}" was approved' | 'Decision "${InAppNotificationRow['title']}" was rejected' | 'You were mentioned in a comment' | '${DbUser['displayName']} comment on ${InAppNotificationRow['title']}` | string;
+      body: `Decision "${InAppNotificationRow['title']}" was approved' | 'Decision "${InAppNotificationRow['title']}" was rejected' |
+       'You were mentioned in a comment' | '${DbUser['displayName']} comment on ${InAppNotificationRow['title']}` | string;
       entityType: string | null;
       entityId: string | null;
       sourceEventId: string;
@@ -104,7 +105,8 @@ export function buildInAppRepo(sql: Sql) {
         insert into in_app_notifications
           (id, org_id, user_id, type, title, body, entity_type, entity_id, source_event_id, correlation_id)
         values
-          (${n.id}, ${n.orgId}, ${n.userId}, ${n.type}, ${n.title}, ${n.body}, ${n.entityType}, ${n.entityId}, ${n.sourceEventId}, ${n.correlationId})
+          (${n.id}, ${n.orgId}, ${n.userId}, ${n.type}, ${n.title}, ${n.body}, ${n.entityType}, ${n.entityId}, 
+          ${n.sourceEventId}, ${n.correlationId})
       `;
     },
   };

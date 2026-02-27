@@ -12,8 +12,9 @@ import type { Role } from "../auth/auth.types";
 import type { OutboxRepo } from "../outbox/outbox.repo";
 
 import { CreateDecisionSchema, NewVersionSchema, AddCommentSchema } from "./decisions.schemas";
-import type { DecisionsRepo, DecisionStatus } from "./decisions.types";
+import type { DecisionsRepo, DecisionStatus, NotificationsRepo } from "./decisions.types";
 import { SSEHub } from "../notifications/sseHub";
+import { NOTIF_TYPES } from "./decisions.types";
 
 export type ImpactRepo = {
   listLinksForDecision(decisionId: string): Promise<unknown[]>;
@@ -58,6 +59,7 @@ type Deps = {
   impactRepo: ImpactRepo;
   outboxRepo: OutboxRepo;
   sseHub: SSEHub;
+  notificationsRepo: NotificationsRepo;
 };
 
 type Principal = {
@@ -143,6 +145,33 @@ export async function registerDecisionRoutes(app: FastifyInstance, deps: Deps) {
         createdBy: principal.userId,
       });
 
+      await deps.notificationsRepo.create({
+        id: randomUUID(),
+        orgId: principal.orgId,
+        type: NOTIF_TYPES.DECISION_CREATED,
+        title: "Decision created",
+        message: `Decision “${body.title}” was created`,
+        createdBy: principal.userId,
+        isRead: false,
+        createdAt: new Date(),
+        meta: {
+          decisionId,
+          versionId,
+        },
+      });
+
+      await deps.notificationsRepo.create({
+        id: randomUUID(),
+        orgId: principal.orgId,
+        type: NOTIF_TYPES.INITIATIVE_CREATED,
+        title: "Initiative created",
+        message: `Initiative “${body.title}” was created`,
+        createdBy: principal.userId,
+        isRead: false,
+        createdAt: new Date(),
+        meta: { initiativeId: decisionId },
+      });
+
       await deps.decisionsRepo.createVersion({
         id: versionId,
         decisionId,
@@ -150,6 +179,7 @@ export async function registerDecisionRoutes(app: FastifyInstance, deps: Deps) {
         createdBy: principal.userId,
         payload: body.initial,
       });
+      
 
       await deps.audit.log(ctx, {
         actorUserId: principal.userId,
