@@ -1,4 +1,4 @@
-# 📌 FlowDesk — _Decision Intelligence & Governance Platform_
+# FlowDesk — _Decision Intelligence & Governance Platform_
 
 ## 1. 🧠 What is FlowDesk / Why It Exists
 
