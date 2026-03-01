@@ -45,6 +45,8 @@ required_rank := {
 
   "initiative.read": 1,
   "initiative.create": 2,
+  "initiative.update": 2,
+  "initiative.delete": 3,
 
   "metric.read": 1,
   "metric.create": 2,
