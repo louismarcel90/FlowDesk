@@ -206,7 +206,7 @@ export async function registerInAppNotificationRoutes(
 
       const userId = String(principal.userId);
       const origin = String(req.headers.origin ?? 'http://localhost:3000');
-      
+
       app.options('/notifications/stream', async (req, reply) => {
         const origin = String(req.headers.origin ?? 'http://localhost:3000');
         reply
@@ -228,7 +228,6 @@ export async function registerInAppNotificationRoutes(
         'Access-Control-Allow-Credentials': 'true',
         Vary: 'Origin',
       });
-
 
       // keep open forever
       req.raw.setTimeout(0);

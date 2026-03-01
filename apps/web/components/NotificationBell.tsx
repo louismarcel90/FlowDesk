@@ -44,8 +44,10 @@ function formatDate(iso: string) {
 
 // map entity -> URL (à étendre si tu ajoutes d’autres entityType)
 function getNotificationHref(n: InboxItem): string | null {
-  if (n.entityType === 'decision' && n.entityId) return `/decisions/${n.entityId}`;
-  if (n.entityType === 'initiative' && n.entityId) return `/impact/initiatives/${n.entityId}`;
+  if (n.entityType === 'decision' && n.entityId)
+    return `/decisions/${n.entityId}`;
+  if (n.entityType === 'initiative' && n.entityId)
+    return `/impact/initiatives/${n.entityId}`;
   return null;
 }
 
@@ -91,7 +93,9 @@ export default function NotificationBell() {
     }
 
     try {
-      const res = await apiFetch<{ unreadCount: number }>('/notifications/unread-count');
+      const res = await apiFetch<{ unreadCount: number }>(
+        '/notifications/unread-count',
+      );
       const count = res?.unreadCount ?? 0;
       setUnreadCount(count);
       writeCachedUnread(count);
@@ -100,7 +104,10 @@ export default function NotificationBell() {
     }
   }
 
-  async function loadInbox(opts?: { append?: boolean; cursor?: string | null }) {
+  async function loadInbox(opts?: {
+    append?: boolean;
+    cursor?: string | null;
+  }) {
     setError('');
     setLoading(true);
 
@@ -138,7 +145,9 @@ export default function NotificationBell() {
     });
 
     setItems((prev) =>
-      prev.map((x) => (x.id === n.id ? { ...x, readAt: new Date().toISOString() } : x)),
+      prev.map((x) =>
+        x.id === n.id ? { ...x, readAt: new Date().toISOString() } : x,
+      ),
     );
 
     try {
@@ -165,7 +174,11 @@ export default function NotificationBell() {
     // optimiste
     setUnreadCount(0);
     writeCachedUnread(0);
-    setItems((prev) => prev.map((x) => (x.readAt ? x : { ...x, readAt: new Date().toISOString() })));
+    setItems((prev) =>
+      prev.map((x) =>
+        x.readAt ? x : { ...x, readAt: new Date().toISOString() },
+      ),
+    );
 
     try {
       const res = await apiFetch<{ ok: boolean; unreadCount?: number }>(
@@ -255,7 +268,10 @@ export default function NotificationBell() {
   const MAX_VISIBLE_NOTIFS = 5;
   const NOTIF_CARD_HEIGHT = 96;
   const DROPDOWN_MAX_HEIGHT =
-    58 /* header */ + 24 /* padding */ + MAX_VISIBLE_NOTIFS * NOTIF_CARD_HEIGHT + 56; /* footer */
+    58 /* header */ +
+    24 /* padding */ +
+    MAX_VISIBLE_NOTIFS * NOTIF_CARD_HEIGHT +
+    56; /* footer */
 
   const isLoggedIn = !!getAccessToken();
 
@@ -270,7 +286,6 @@ export default function NotificationBell() {
         style={{ position: 'relative' }}
       >
         🔔
-
         {/* Badge permanent si unreadCount > 0 */}
         {unreadCount > 0 && (
           <span
@@ -338,7 +353,10 @@ export default function NotificationBell() {
                   border: 'none',
                   color: 'rgba(255,255,255,0.85)',
                   textDecoration: 'underline',
-                  cursor: !isLoggedIn || unreadCount === 0 ? 'not-allowed' : 'pointer',
+                  cursor:
+                    !isLoggedIn || unreadCount === 0
+                      ? 'not-allowed'
+                      : 'pointer',
                   fontWeight: 600,
                   opacity: !isLoggedIn || unreadCount === 0 ? 0.5 : 1,
                 }}
@@ -386,7 +404,8 @@ export default function NotificationBell() {
                   fontWeight: 600,
                 }}
               >
-                You are logged out. Showing last known unread count only. Login to view your inbox.
+                You are logged out. Showing last known unread count only. Login
+                to view your inbox.
               </div>
             )}
 
@@ -406,7 +425,9 @@ export default function NotificationBell() {
             )}
 
             {loading && (
-              <div style={{ padding: 10, color: 'rgba(255,255,255,0.75)' }}>Loading…</div>
+              <div style={{ padding: 10, color: 'rgba(255,255,255,0.75)' }}>
+                Loading…
+              </div>
             )}
 
             {!loading && isLoggedIn && items.length === 0 && (
@@ -429,9 +450,13 @@ export default function NotificationBell() {
                       width: '100%',
                       borderRadius: 14,
                       border: `1px solid ${
-                        isUnread ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.10)'
+                        isUnread
+                          ? 'rgba(255,255,255,0.18)'
+                          : 'rgba(255,255,255,0.10)'
                       }`,
-                      background: isUnread ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.03)',
+                      background: isUnread
+                        ? 'rgba(255,255,255,0.06)'
+                        : 'rgba(255,255,255,0.03)',
                       padding: '12px 12px',
                       cursor: 'pointer',
                       display: 'grid',
@@ -446,20 +471,42 @@ export default function NotificationBell() {
                         alignItems: 'baseline',
                       }}
                     >
-                      <div style={{ fontWeight: 800, color: 'rgba(255,255,255,0.92)' }}>
+                      <div
+                        style={{
+                          fontWeight: 800,
+                          color: 'rgba(255,255,255,0.92)',
+                        }}
+                      >
                         {n.title}
                       </div>
-                      <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)' }}>
+                      <div
+                        style={{
+                          fontSize: 12,
+                          color: 'rgba(255,255,255,0.55)',
+                        }}
+                      >
                         {formatDate(n.createdAt)}
                       </div>
                     </div>
 
-                    <div style={{ color: 'rgba(255,255,255,0.78)', lineHeight: 1.35 }}>
+                    <div
+                      style={{
+                        color: 'rgba(255,255,255,0.78)',
+                        lineHeight: 1.35,
+                      }}
+                    >
                       {n.body}
                     </div>
 
                     {isUnread && (
-                      <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)' }}>Unread</div>
+                      <div
+                        style={{
+                          fontSize: 12,
+                          color: 'rgba(255,255,255,0.65)',
+                        }}
+                      >
+                        Unread
+                      </div>
                     )}
                   </button>
                 );
@@ -478,7 +525,9 @@ export default function NotificationBell() {
             }}
           >
             <div style={{ color: 'rgba(255,255,255,0.65)', fontSize: 12 }}>
-              {isLoggedIn ? 'Live updates enabled' : 'Login to enable live updates'}
+              {isLoggedIn
+                ? 'Live updates enabled'
+                : 'Login to enable live updates'}
             </div>
 
             <div style={{ display: 'flex', gap: 10 }}>
@@ -486,7 +535,9 @@ export default function NotificationBell() {
                 <button
                   type="button"
                   className="fd-btn"
-                  onClick={() => loadInbox({ append: true, cursor: nextCursor })}
+                  onClick={() =>
+                    loadInbox({ append: true, cursor: nextCursor })
+                  }
                   disabled={loading}
                 >
                   Load more
@@ -494,11 +545,19 @@ export default function NotificationBell() {
               )}
 
               {isLoggedIn ? (
-                <button type="button" className="fd-btn" onClick={() => setOpen(false)}>
+                <button
+                  type="button"
+                  className="fd-btn"
+                  onClick={() => setOpen(false)}
+                >
                   Close
                 </button>
               ) : (
-                <button type="button" className="fd-btn" onClick={() => router.push('/login')}>
+                <button
+                  type="button"
+                  className="fd-btn"
+                  onClick={() => router.push('/login')}
+                >
                   Login
                 </button>
               )}
