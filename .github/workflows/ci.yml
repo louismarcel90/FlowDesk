@@ -9,6 +9,39 @@
 #   build:
 #     runs-on: ubuntu-latest
 
+#     services:
+#       postgres:
+#         image: postgres:16
+#         env:
+#           POSTGRES_USER: postgres
+#           POSTGRES_PASSWORD: postgres
+#           POSTGRES_DB: flowdesk_test
+#         ports:
+#           - 5432:5432
+#         options: >-
+#           --health-cmd="pg_isready -U postgres -d flowdesk_test"
+#           --health-interval=10s
+#           --health-timeout=5s
+#           --health-retries=10
+
+#       redis:
+#         image: redis:7
+#         ports:
+#           - 6379:6379
+#         options: >-
+#           --health-cmd="redis-cli ping"
+#           --health-interval=10s
+#           --health-timeout=5s
+#           --health-retries=10
+
+#       opa:
+#         image: openpolicyagent/opa:latest
+#         ports:
+#           - 8181:8181
+#         options: >-
+#           --entrypoint /opa
+#           run --server --addr=0.0.0.0:8181
+
 #     steps:
 #       - name: Checkout
 #         uses: actions/checkout@v4
@@ -39,12 +72,13 @@
 #       - name: Test
 #         run: pnpm run test
 #         env:
+#           TURBO_ENV_MODE: loose
 #           NODE_ENV: test
 #           JWT_ACCESS_SECRET: test_access_secret_32_chars_min________
 #           JWT_REFRESH_SECRET: test_refresh_secret_32_chars_min_______
-#           DATABASE_URL: postgresql://user:pass@localhost:5432/flowdesk_test
-#           REDIS_URL: redis://localhost:6379
-#           OPA_URL: http://localhost:8181
+#           DATABASE_URL: postgresql://postgres:postgres@postgres:5432/flowdesk_test
+#           REDIS_URL: redis://redis:6379
+#           OPA_URL: http://opa:8181
 
 #       - name: Build
 #         run: pnpm run build
@@ -86,14 +120,6 @@ jobs:
           --health-timeout=5s
           --health-retries=10
 
-      opa:
-        image: openpolicyagent/opa:latest
-        ports:
-          - 8181:8181
-        options: >-
-          --entrypoint /opa
-          run --server --addr=0.0.0.0:8181
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -121,16 +147,37 @@ jobs:
       - name: Typecheck
         run: pnpm run typecheck
 
+      # ✅ OPA démarre ici (au lieu de services:)
+      - name: Start OPA
+        run: |
+          docker run -d --name opa \
+            -p 8181:8181 \
+            openpolicyagent/opa:latest \
+            run --server --addr=0.0.0.0:8181
+
+      - name: Wait for OPA
+        run: |
+          for i in {1..30}; do
+            if curl -sSf http://localhost:8181/health >/dev/null; then
+              echo "OPA is up"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "OPA did not become healthy in time"
+          docker logs opa || true
+          exit 1
+
       - name: Test
         run: pnpm run test
         env:
           TURBO_ENV_MODE: loose
           NODE_ENV: test
-          JWT_ACCESS_SECRET: test_access_secret_32_chars_min________
-          JWT_REFRESH_SECRET: test_refresh_secret_32_chars_min_______
+          JWT_ACCESS_SECRET: test_access_secret_32_chars_min
+          JWT_REFRESH_SECRET: test_refresh_secret_32_chars_min
           DATABASE_URL: postgresql://postgres:postgres@postgres:5432/flowdesk_test
           REDIS_URL: redis://redis:6379
-          OPA_URL: http://opa:8181
+          OPA_URL: http://localhost:8181
 
       - name: Build
         run: pnpm run build
