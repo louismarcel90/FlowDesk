@@ -28,7 +28,8 @@ export default function ContactPage() {
       <section className="fd-hero fd-stack">
         <h1>Contact Us</h1>
         <p>
-          Have a question, a request, or want a product demo? Send us a message and we’ll get back to you.
+          Have a question, a request, or want a product demo? Send us a message
+          and we’ll get back to you.
         </p>
       </section>
 
@@ -36,7 +37,9 @@ export default function ContactPage() {
         <div className="fd-card-header">
           <div>
             <div className="fd-card-title">Message</div>
-            <div className="fd-card-subtitle">We typically respond within 1–2 business days.</div>
+            <div className="fd-card-subtitle">
+              We typically respond within 1–2 business days.
+            </div>
           </div>
         </div>
 
@@ -49,7 +52,7 @@ export default function ContactPage() {
                 border: '1px solid rgba(46,233,166,0.35)',
                 background: 'rgba(46,233,166,0.10)',
                 color: 'rgba(255,255,255,0.9)',
-                marginBottom: 12
+                marginBottom: 12,
               }}
             >
               ✅ Message sent. Thanks — we’ll reach out soon.
@@ -57,7 +60,10 @@ export default function ContactPage() {
           )}
 
           <form onSubmit={submit} className="fd-stack">
-            <div className="fd-row fd-wrap" style={{ alignItems: 'flex-start' }}>
+            <div
+              className="fd-row fd-wrap"
+              style={{ alignItems: 'flex-start' }}
+            >
               <label className="fd-label" style={{ flex: 1, minWidth: 220 }}>
                 Name
                 <input
@@ -120,7 +126,9 @@ export default function ContactPage() {
         <div className="fd-card-header">
           <div>
             <div className="fd-card-title">Other ways to reach us</div>
-            <div className="fd-card-subtitle">For enterprise inquiries and support.</div>
+            <div className="fd-card-subtitle">
+              For enterprise inquiries and support.
+            </div>
           </div>
         </div>
 
@@ -147,8 +155,9 @@ export default function ContactPage() {
           </ul>
 
           <p style={{ color: 'var(--muted)' }}>
-            Note: these addresses are placeholders for the portfolio version.
-            In production, connect this form to the notification system (email + ticket).
+            Note: these addresses are placeholders for the portfolio version. In
+            production, connect this form to the notification system (email +
+            ticket).
           </p>
         </div>
       </section>

@@ -1,9 +1,9 @@
 import { z } from 'zod';
-import { DECISION_STATUSES, type DecisionStatus } from "./decisions.types";
+import { DECISION_STATUSES, type DecisionStatus } from './decisions.types';
 
-
-export const DecisionStatusSchema = z
-  .enum(DECISION_STATUSES) satisfies z.ZodType<DecisionStatus>;
+export const DecisionStatusSchema = z.enum(
+  DECISION_STATUSES,
+) satisfies z.ZodType<DecisionStatus>;
 const AnyRecord = z.record(z.string(), z.any());
 
 export const UpdateDecisionStatusSchema = z.object({

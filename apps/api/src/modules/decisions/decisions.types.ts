@@ -1,25 +1,25 @@
-import { JSONValue } from "postgres";
+import { JSONValue } from 'postgres';
 
 // Decision status
 export const DECISION_STATUSES = [
-  "draft",
-  "proposed",
-  "approved",
-  "rejected",
-  "superseded",
-  "archived",
+  'draft',
+  'proposed',
+  'approved',
+  'rejected',
+  'superseded',
+  'archived',
 ] as const;
 
 export type DecisionStatus = (typeof DECISION_STATUSES)[number];
 
 // Decision/Initiative notifications
 export const NOTIF_TYPES = {
-  DECISION_CREATED: "DECISION_CREATED",
-  DECISION_STATUS_CHANGED: "DECISION_STATUS_CHANGED",
-  INITIATIVE_CREATED: "INITIATIVE_CREATED",
+  DECISION_CREATED: 'DECISION_CREATED',
+  DECISION_STATUS_CHANGED: 'DECISION_STATUS_CHANGED',
+  INITIATIVE_CREATED: 'INITIATIVE_CREATED',
 } as const;
 
-export type NotifType = typeof NOTIF_TYPES[keyof typeof NOTIF_TYPES];
+export type NotifType = (typeof NOTIF_TYPES)[keyof typeof NOTIF_TYPES];
 
 // ---------------------------------------------
 // Notifications
@@ -39,7 +39,7 @@ export type Notification = {
 
   isRead: boolean;
 
-  meta?: JSONValue | null; 
+  meta?: JSONValue | null;
 };
 
 export type NotificationsRepo = {
@@ -66,7 +66,6 @@ export type NotificationsRepo = {
 
   markAllAsRead(orgId: string): Promise<void>;
 };
-
 
 export type DecisionVersionPayload = {
   context: JSONValue;
@@ -135,7 +134,9 @@ export type DecisionsRepo = {
   listDecisions(orgId: string): Promise<DecisionListItem[]>;
   getDecision(decisionId: string, orgId: string): Promise<Decision | null>;
   getVersions(decisionId: string): Promise<DecisionVersion[]>;
-  getComments(decisionId: string): Promise<DecisionComment[] | DecisionCommentRaw[]>;
+  getComments(
+    decisionId: string,
+  ): Promise<DecisionComment[] | DecisionCommentRaw[]>;
 
   createDecision(input: {
     id: string;

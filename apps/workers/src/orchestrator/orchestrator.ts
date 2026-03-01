@@ -54,11 +54,13 @@ export async function runOrchestrator() {
 
       for (const m of members) {
         // preferences
-        const prefs = await sql<{
-          email_enabled: boolean;
-          quiet_hours_start: string | null;
-          quiet_hours_end: string | null;
-        }[]>`
+        const prefs = await sql<
+          {
+            email_enabled: boolean;
+            quiet_hours_start: string | null;
+            quiet_hours_end: string | null;
+          }[]
+        >`
           select email_enabled, quiet_hours_start, quiet_hours_end
           from notification_preferences
           where org_id = ${orgId} and user_id = ${m.user_id}
@@ -107,10 +109,10 @@ export async function runOrchestrator() {
                 type,
                 orgId,
                 userId: m.user_id,
-                correlationId
-              })
-            }
-          ]
+                correlationId,
+              }),
+            },
+          ],
         });
 
         // in-app inbox item (facebook-style)
@@ -125,10 +127,11 @@ export async function runOrchestrator() {
               ${eventId}, ${correlationId})
               `;
 
-
-        console.log(`[orchestrator] created notification ${notificationId} job ${jobId}`);
+        console.log(
+          `[orchestrator] created notification ${notificationId} job ${jobId}`,
+        );
       }
-    }
+    },
   });
 }
 

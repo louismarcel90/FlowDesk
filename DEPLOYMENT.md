@@ -3,6 +3,7 @@
 ## Architecture Overview
 
 Components:
+
 - API (Fastify)
 - Workers:
   - Outbox Publisher
@@ -19,15 +20,18 @@ Components:
 # 1️⃣ Environments
 
 ## Local
+
 Docker compose:
 pnpm infra:up
 
 ## Staging
+
 - Same infra as production
 - Lower scale
 - Smoke tests enabled
 
 ## Production
+
 - Managed PostgreSQL
 - Managed Kafka
 - Horizontal API scaling
@@ -69,6 +73,7 @@ If release fails:
 5. Inspect audit logs
 
 Note:
+
 - Migrations are additive
 - Avoid destructive changes
 
@@ -77,13 +82,16 @@ Note:
 # 5️⃣ Scaling Strategy
 
 API:
+
 - Stateless
 - Horizontal scaling
 
 Workers:
+
 - Scale based on Kafka consumer lag
 
 Database:
+
 - Read replicas for analytics
 
 ---
@@ -91,6 +99,7 @@ Database:
 # 6️⃣ Backup Strategy
 
 Production:
+
 - Daily DB snapshot
 - Retention: 14 days
 - Restore tested quarterly

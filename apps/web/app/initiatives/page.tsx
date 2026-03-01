@@ -11,7 +11,7 @@ type Initiative = {
   description?: string | null;
   status: string;
   createdAt?: string;
-  decision?: Decision
+  decision?: Decision;
 };
 
 function formatDate(d?: string) {
@@ -106,7 +106,9 @@ export default function InitiativesPage() {
       {(error || createdToast) && (
         <div className="fd-stack" style={{ gap: 10 }}>
           {error && <div className="fd-alert fd-alert--danger">{error}</div>}
-          {createdToast && <div className="fd-alert fd-alert--success">{createdToast}</div>}
+          {createdToast && (
+            <div className="fd-alert fd-alert--success">{createdToast}</div>
+          )}
         </div>
       )}
 
@@ -115,12 +117,18 @@ export default function InitiativesPage() {
           <div>
             <div className="fd-card-title">Create initiative</div>
             <div className="fd-card-subtitle">
-              Provide a clear name + description. Status defaults to <b>active</b>.
+              Provide a clear name + description. Status defaults to{' '}
+              <b>active</b>.
             </div>
           </div>
 
           <div className="fd-row" style={{ gap: 10 }}>
-            <button className="fd-btn" type="button" onClick={reset} disabled={creating}>
+            <button
+              className="fd-btn"
+              type="button"
+              onClick={reset}
+              disabled={creating}
+            >
               Reset
             </button>
             <button
@@ -129,7 +137,11 @@ export default function InitiativesPage() {
               onClick={create}
               disabled={!canSubmit}
               aria-disabled={!canSubmit}
-              title={!canSubmit ? 'Name ≥ 3 chars, description ≥ 10 chars' : 'Create initiative'}
+              title={
+                !canSubmit
+                  ? 'Name ≥ 3 chars, description ≥ 10 chars'
+                  : 'Create initiative'
+              }
             >
               {creating ? 'Creating…' : 'Create'}
             </button>
@@ -186,7 +198,9 @@ export default function InitiativesPage() {
           <div>
             <div className="fd-card-title">List</div>
             <div className="fd-card-subtitle">
-              {loadingList ? 'Loading initiatives…' : `${items.length} initiative(s)`}
+              {loadingList
+                ? 'Loading initiatives…'
+                : `${items.length} initiative(s)`}
             </div>
           </div>
         </div>
@@ -211,12 +225,15 @@ export default function InitiativesPage() {
                 <li key={i.id ?? i.name} className="fd-list-item">
                   <div className="fd-list-main">
                     {i.id ? (
-                      <Link className="fd-item-title" href={`/initiatives/${i.id}`}>
+                      <Link
+                        className="fd-item-title"
+                        href={`/initiatives/${i.id}`}
+                      >
                         {i.name}
                       </Link>
                     ) : (
                       <span className="fd-item-title">{i.name}</span>
-                  )}
+                    )}
                     {i.description ? (
                       <div className="fd-item-subtitle">{i.description}</div>
                     ) : null}
@@ -226,16 +243,16 @@ export default function InitiativesPage() {
                       </div>
                       <div>
                         <span className="fd-meta">
-                          {i.decision?.title ?? "no decision linked"}
+                          {i.decision?.title ?? 'no decision linked'}
                         </span>
                       </div>
-                     {i.createdAt && (
-                      <div>
-                        <span className="fd-meta">
-                          Created {formatDate(i.createdAt)}
-                        </span>
-                      </div>
-                     )}     
+                      {i.createdAt && (
+                        <div>
+                          <span className="fd-meta">
+                            Created {formatDate(i.createdAt)}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
 

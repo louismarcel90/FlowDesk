@@ -5,7 +5,6 @@
 // import { apiFetch } from '../../../lib/api';
 // import { Principal } from '../../../../api/src/modules/auth/auth.types';
 
-
 // type MeResponse = {
 //   ok: boolean;
 //   principal: Principal;
@@ -200,7 +199,6 @@
 //       </button>
 //     </div>
 //   </div>
-
 
 //         <form onSubmit={onSubmit} className="fd-form">
 //           <div className="fd-form-grid">
@@ -417,8 +415,6 @@
 //   );
 // }
 
-
-
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
@@ -519,7 +515,13 @@ export default function CreateDecisionPage() {
       recommendationOk,
       optionsOk,
       canSubmit:
-        meOk && titleOk && summaryOk && problemOk && goalOk && recommendationOk && optionsOk,
+        meOk &&
+        titleOk &&
+        summaryOk &&
+        problemOk &&
+        goalOk &&
+        recommendationOk &&
+        optionsOk,
     };
   }, [me, title, summary, problem, goal, recommendation, options]);
 
@@ -555,8 +557,10 @@ export default function CreateDecisionPage() {
     if (!validation.summaryOk) return 'Summary must be at least 10 characters.';
     if (!validation.problemOk) return 'Problem must be at least 5 characters.';
     if (!validation.goalOk) return 'Goal must be at least 3 characters.';
-    if (!validation.recommendationOk) return 'Recommendation must be at least 3 characters.';
-    if (!validation.optionsOk) return 'At least one option with a label is required.';
+    if (!validation.recommendationOk)
+      return 'Recommendation must be at least 3 characters.';
+    if (!validation.optionsOk)
+      return 'At least one option with a label is required.';
     return null;
   }
 
@@ -790,12 +794,21 @@ export default function CreateDecisionPage() {
 
           {/* OPTIONS */}
           <div style={{ display: 'grid', gap: 12, marginTop: 6 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: 12,
+              }}
+            >
               <div>
                 <div className="fd-label" style={{ fontSize: 14 }}>
                   Options <span className="fd-required">*</span>
                 </div>
-                <div className="fd-help">At least one option with a label is required.</div>
+                <div className="fd-help">
+                  At least one option with a label is required.
+                </div>
               </div>
 
               <button type="button" className="fd-btn" onClick={addOption}>
@@ -820,7 +833,11 @@ export default function CreateDecisionPage() {
                       className="fd-btn"
                       onClick={() => removeOption(idx)}
                       disabled={options.length <= 1}
-                      title={options.length <= 1 ? 'At least one option is required' : 'Remove option'}
+                      title={
+                        options.length <= 1
+                          ? 'At least one option is required'
+                          : 'Remove option'
+                      }
                     >
                       Remove
                     </button>
@@ -834,7 +851,11 @@ export default function CreateDecisionPage() {
                         value={opt.label}
                         onChange={(e) => {
                           const v = e.target.value;
-                          setOptions((prev) => prev.map((p, i) => (i === idx ? { ...p, label: v } : p)));
+                          setOptions((prev) =>
+                            prev.map((p, i) =>
+                              i === idx ? { ...p, label: v } : p,
+                            ),
+                          );
                         }}
                         placeholder="Event-driven via Kafka + worker"
                         required
@@ -844,7 +865,9 @@ export default function CreateDecisionPage() {
 
                     <div className="fd-inline-2">
                       <div className="fd-field">
-                        <label className="fd-label">Pros (1 line = 1 pro)</label>
+                        <label className="fd-label">
+                          Pros (1 line = 1 pro)
+                        </label>
                         <textarea
                           className="fd-textarea"
                           style={{ minHeight: 120 }}
@@ -852,15 +875,21 @@ export default function CreateDecisionPage() {
                           onChange={(e) => {
                             const v = e.target.value;
                             setOptions((prev) =>
-                              prev.map((p, i) => (i === idx ? { ...p, prosText: v } : p)),
+                              prev.map((p, i) =>
+                                i === idx ? { ...p, prosText: v } : p,
+                              ),
                             );
                           }}
-                          placeholder={'Decouples API\nRetryable processing\nLower latency'}
+                          placeholder={
+                            'Decouples API\nRetryable processing\nLower latency'
+                          }
                         />
                       </div>
 
                       <div className="fd-field">
-                        <label className="fd-label">Cons (1 line = 1 con)</label>
+                        <label className="fd-label">
+                          Cons (1 line = 1 con)
+                        </label>
                         <textarea
                           className="fd-textarea"
                           style={{ minHeight: 120 }}
@@ -868,7 +897,9 @@ export default function CreateDecisionPage() {
                           onChange={(e) => {
                             const v = e.target.value;
                             setOptions((prev) =>
-                              prev.map((p, i) => (i === idx ? { ...p, consText: v } : p)),
+                              prev.map((p, i) =>
+                                i === idx ? { ...p, consText: v } : p,
+                              ),
                             );
                           }}
                           placeholder={'More moving parts\nNeed observability'}
@@ -883,7 +914,11 @@ export default function CreateDecisionPage() {
 
           {/* FOOTER */}
           <div className="fd-form-footer sticky">
-            <button type="button" className="fd-btn" onClick={() => router.push('/decisions')}>
+            <button
+              type="button"
+              className="fd-btn"
+              onClick={() => router.push('/decisions')}
+            >
               Cancel
             </button>
 
@@ -898,7 +933,7 @@ export default function CreateDecisionPage() {
                     ? 'Creating…'
                     : validation.canSubmit
                       ? 'Create decision'
-                      : firstValidationError() ?? 'Complete required fields'
+                      : (firstValidationError() ?? 'Complete required fields')
               }
             >
               {submitting ? 'Creating…' : 'Create decision'}

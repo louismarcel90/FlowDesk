@@ -10,11 +10,7 @@ import { RoleRank } from './auth.types';
  * - /health, /ready : endpoints ops classiques
  * - /internal/metrics : si tu l'utilises (d'après ton arbre de routes)
  */
-const PUBLIC_PATHS = new Set([
-  '/metrics',
-  '/health',
-  '/ready',
-]);
+const PUBLIC_PATHS = new Set(['/metrics', '/health', '/ready']);
 
 export type AuthPrincipal = {
   orgId: string;

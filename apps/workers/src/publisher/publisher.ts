@@ -1,6 +1,6 @@
-import postgres, { type JSONValue } from "postgres";
-import { kafka } from "../kafka/client";
-import "dotenv/config";
+import postgres, { type JSONValue } from 'postgres';
+import { kafka } from '../kafka/client';
+import 'dotenv/config';
 
 type OutboxRow = {
   id: string;
@@ -12,12 +12,12 @@ type OutboxRow = {
 
 const DATABASE_URL = process.env.DATABASE_URL;
 if (!DATABASE_URL) {
-  throw new Error("DATABASE_URL is missing. Set it in apps/workers/.env");
+  throw new Error('DATABASE_URL is missing. Set it in apps/workers/.env');
 }
 
 const sql = postgres(DATABASE_URL, { max: 5 });
 
-const TOPIC = "flowdesk.domain.v1";
+const TOPIC = 'flowdesk.domain.v1';
 
 async function publishOnce(): Promise<void> {
   const producer = kafka.producer();
@@ -67,14 +67,14 @@ async function publishOnce(): Promise<void> {
 }
 
 async function main(): Promise<void> {
-  console.log("[publisher] starting");
+  console.log('[publisher] starting');
 
   // loop simple (pas de cron externe) : toutes les 2s
   for (;;) {
     try {
       await publishOnce();
     } catch (err) {
-      console.error("[publisher] error:", err);
+      console.error('[publisher] error:', err);
     }
 
     await new Promise((r) => setTimeout(r, 2000));

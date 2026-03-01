@@ -1,8 +1,12 @@
 import NotificationBell from '../components/NotificationBell';
 import { HeaderAuthButton } from './HeaderAuthButton';
-import './globals.css'
+import './globals.css';
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="fr">
       <body>
@@ -10,11 +14,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div className="fd-header-inner">
             <div className="fd-brand">
               <a href="/">
-              <div className="fd-mark" />
-              <div className="fd-brand-title">
-                <strong>FlowDesk</strong>
-                <span>Decision Intelligence & Governance</span>
-              </div>
+                <div className="fd-mark" />
+                <div className="fd-brand-title">
+                  <strong>FlowDesk</strong>
+                  <span>Decision Intelligence & Governance</span>
+                </div>
               </a>
             </div>
 

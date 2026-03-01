@@ -16,8 +16,6 @@ export type InAppNotificationRow = {
   readAt: Date | null;
 };
 
-
-
 export function buildInAppRepo(sql: Sql) {
   return {
     async unreadCount(userId: string) {
@@ -92,10 +90,22 @@ export function buildInAppRepo(sql: Sql) {
       id: string;
       orgId: string;
       userId: string;
-      type: 'decision.approved' | 'decision.rejected' | 'comment.mentioned' | 'comment.posted' | string;
-      title: 'Decision approved' | 'Decision rejected' | 'Mentioned in comment' | 'New comment' | string;
-      body: `Decision "${InAppNotificationRow['title']}" was approved' | 'Decision "${InAppNotificationRow['title']}" was rejected' |
-       'You were mentioned in a comment' | '${DbUser['displayName']} comment on ${InAppNotificationRow['title']}` | string;
+      type:
+        | 'decision.approved'
+        | 'decision.rejected'
+        | 'comment.mentioned'
+        | 'comment.posted'
+        | string;
+      title:
+        | 'Decision approved'
+        | 'Decision rejected'
+        | 'Mentioned in comment'
+        | 'New comment'
+        | string;
+      body:
+        | `Decision "${InAppNotificationRow['title']}" was approved' | 'Decision "${InAppNotificationRow['title']}" was rejected' |
+       'You were mentioned in a comment' | '${DbUser['displayName']} comment on ${InAppNotificationRow['title']}`
+        | string;
       entityType: string | null;
       entityId: string | null;
       sourceEventId: string;

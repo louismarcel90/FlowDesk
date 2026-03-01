@@ -1,7 +1,7 @@
-import InitiativeDetailClient from "./initiativeDetailClient";
+import InitiativeDetailClient from './initiativeDetailClient';
 
 type PageProps = {
-  params: Promise<{ id: string }>; 
+  params: Promise<{ id: string }>;
 };
 
 export default async function InitiativeDetailPage({ params }: PageProps) {

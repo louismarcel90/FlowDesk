@@ -21,7 +21,9 @@ export default function OpsNotificationsPage() {
     setBusyId(id);
     setError('');
     try {
-      await apiFetch(`/admin/notifications/dlq/${id}/reprocess`, { method: 'POST' });
+      await apiFetch(`/admin/notifications/dlq/${id}/reprocess`, {
+        method: 'POST',
+      });
       await load();
     } catch (e: any) {
       setError(String(e.message ?? e));
@@ -37,17 +39,32 @@ export default function OpsNotificationsPage() {
 
       <ul style={{ display: 'grid', gap: 10 }}>
         {items.map((x) => (
-          <li key={x.id} style={{ border: '1px solid #ddd', padding: 12, borderRadius: 10 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+          <li
+            key={x.id}
+            style={{ border: '1px solid #ddd', padding: 12, borderRadius: 10 }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                gap: 12,
+              }}
+            >
               <div style={{ display: 'grid', gap: 4 }}>
                 <strong>{x.channel}</strong>
-                <div><b>Reason:</b> {x.reason}</div>
+                <div>
+                  <b>Reason:</b> {x.reason}
+                </div>
                 <small style={{ opacity: 0.7 }}>
-                  {new Date(x.created_at).toLocaleString()} — reprocessed: {x.reprocessed_at ? 'yes' : 'no'}
+                  {new Date(x.created_at).toLocaleString()} — reprocessed:{' '}
+                  {x.reprocessed_at ? 'yes' : 'no'}
                 </small>
               </div>
 
-              <button disabled={busyId === x.id} onClick={() => reprocess(x.id)}>
+              <button
+                disabled={busyId === x.id}
+                onClick={() => reprocess(x.id)}
+              >
                 {busyId === x.id ? '...' : 'Reprocess'}
               </button>
             </div>

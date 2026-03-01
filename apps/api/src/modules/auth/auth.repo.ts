@@ -8,9 +8,9 @@ export type DbUser = {
   displayName: string;
 };
 
-// Row "DB-shape" (snake_case) 
+// Row "DB-shape" (snake_case)
 export type RefreshRow = {
-  id: string; 
+  id: string;
   org_id: string | null;
   user_id: string;
   token_hash: string;
@@ -72,7 +72,6 @@ export function buildAuthRepo(sql: Sql) {
       return rows[0]?.role ?? null;
     },
 
-  
     async upsertRefreshToken(rt: RefreshRow): Promise<void> {
       await sql`
         insert into refresh_tokens (id, user_id, org_id, token_hash, expires_at)

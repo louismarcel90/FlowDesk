@@ -7,7 +7,7 @@ export type NotificationDlqRow = {
   notification_id: string;
   channel: string;
   reason: string;
-  payload: JSONValue; 
+  payload: JSONValue;
   created_at: Date;
   reprocessed_at: Date | null;
 };
@@ -47,6 +47,6 @@ export function buildDlqRepo(sql: Sql) {
             locked_at = null
         where id = ${jobId}
       `;
-    }
+    },
   };
 }

@@ -32,7 +32,12 @@ export function HeaderAuthButton() {
     <button
       type="button"
       className="fd-nav-link"
-      style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#fff' }}
+      style={{
+        background: 'transparent',
+        border: 'none',
+        cursor: 'pointer',
+        color: '#fff',
+      }}
       onClick={() => {
         clearTokens();
         router.push('/login');

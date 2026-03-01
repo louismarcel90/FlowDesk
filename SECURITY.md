@@ -21,6 +21,7 @@ FlowDesk is designed with security-by-default principles:
 - Bearer token required for all protected routes
 
 Future hardening:
+
 - HTTP-only cookies
 - CSRF protection
 - Token rotation enforcement
@@ -31,15 +32,18 @@ Future hardening:
 # 2️⃣ Authorization (OPA Policy-as-Code)
 
 All protected endpoints require:
+
 - Authentication
 - Policy evaluation through Open Policy Agent (OPA)
 
 Policies define:
+
 - Action (e.g. decision.approve)
 - Resource
 - Role rank requirements
 
 Security benefits:
+
 - Centralized authorization logic
 - Auditability of policy decisions
 - Deterministic access control
@@ -54,6 +58,7 @@ Security benefits:
 - Strict input validation
 
 Sensitive fields:
+
 - JWT secrets (env only)
 - SMTP credentials
 - Database credentials
@@ -63,6 +68,7 @@ Sensitive fields:
 # 4️⃣ Audit Logging
 
 Every critical action logs:
+
 - actor_user_id
 - action
 - entity_type
@@ -72,6 +78,7 @@ Every critical action logs:
 - timestamp
 
 Examples:
+
 - DECISION_APPROVED
 - METRIC_CREATED
 - DLQ_REPROCESSED
@@ -101,6 +108,7 @@ Audit logs are immutable.
 # 7️⃣ Secret Management
 
 Production strategy:
+
 - Use environment-based secret injection
 - No secrets in repository
 - Encrypted secret storage (e.g., AWS Secrets Manager / Vault)
@@ -112,6 +120,7 @@ Production strategy:
 See: RUNBOOKS/incidents.md
 
 Key immediate actions:
+
 - Rotate secrets
 - Invalidate tokens
 - Freeze notification jobs

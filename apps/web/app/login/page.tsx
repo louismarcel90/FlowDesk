@@ -134,7 +134,6 @@
 //   );
 // }
 
-
 'use client';
 
 import { useState } from 'react';
@@ -158,13 +157,13 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const res = await apiFetch<{ accessToken: string; refreshToken?: string }>(
-        '/auth/login',
-        {
-          method: 'POST',
-          body: JSON.stringify({ email, password, orgId }),
-        }
-      );
+      const res = await apiFetch<{
+        accessToken: string;
+        refreshToken?: string;
+      }>('/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ email, password, orgId }),
+      });
 
       if (!res?.accessToken) throw new Error('Invalid response from server');
 
@@ -183,7 +182,9 @@ export default function LoginPage() {
         <div className="fd-card-header">
           <div>
             <div className="fd-card-title">Login to FlowDesk</div>
-            <div className="fd-card-subtitle">Access your organization workspace</div>
+            <div className="fd-card-subtitle">
+              Access your organization workspace
+            </div>
           </div>
         </div>
 
@@ -191,26 +192,55 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit} className="fd-stack">
             <label className="fd-label">
               Organization ID
-              <input className="fd-input" value={orgId} onChange={(e) => setOrgId(e.target.value)} required />
+              <input
+                className="fd-input"
+                value={orgId}
+                onChange={(e) => setOrgId(e.target.value)}
+                required
+              />
             </label>
 
             <label className="fd-label">
               Email
-              <input className="fd-input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+              <input
+                className="fd-input"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
             </label>
 
             <label className="fd-label">
               Password
-              <input className="fd-input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+              <input
+                className="fd-input"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
             </label>
 
             {error && (
-              <div style={{ padding: 10, borderRadius: 12, background: 'rgba(255,77,125,0.12)', border: '1px solid rgba(255,77,125,0.35)', color: 'var(--danger)' }}>
+              <div
+                style={{
+                  padding: 10,
+                  borderRadius: 12,
+                  background: 'rgba(255,77,125,0.12)',
+                  border: '1px solid rgba(255,77,125,0.35)',
+                  color: 'var(--danger)',
+                }}
+              >
                 {error}
               </div>
             )}
 
-            <button type="submit" disabled={loading} className="fd-btn fd-btn--primary">
+            <button
+              type="submit"
+              disabled={loading}
+              className="fd-btn fd-btn--primary"
+            >
               {loading ? 'Signing in…' : 'Sign In'}
             </button>
           </form>

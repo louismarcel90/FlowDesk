@@ -16,13 +16,13 @@ export default function NotificationsPage() {
     const res = await apiFetch(`/notifications/inbox?${q.toString()}`);
     setNextCursor(res.nextCursor ?? null);
     if (!cursor) setItems(res.items);
-    else setItems((prev) => {
-      const merged = [...prev, ...res.items];
-      const map = new Map(merged.map((x: any) => [x.id, x]));
-    return Array.from(map.values());
-  });
-}
-
+    else
+      setItems((prev) => {
+        const merged = [...prev, ...res.items];
+        const map = new Map(merged.map((x: any) => [x.id, x]));
+        return Array.from(map.values());
+      });
+  }
 
   useEffect(() => {
     load().catch((e) => setError(String(e.message ?? e)));
@@ -40,7 +40,13 @@ export default function NotificationsPage() {
 
   return (
     <main style={{ display: 'grid', gap: 16 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}
+      >
         <h1>Notifications</h1>
         <button onClick={markAll}>Mark all as read</button>
       </div>
@@ -56,30 +62,45 @@ export default function NotificationsPage() {
               borderRadius: 10,
               padding: 12,
               background: n.readAt ? 'white' : '#fff7f7',
-              color: '#000'
+              color: '#000',
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                gap: 12,
+              }}
+            >
               <div style={{ display: 'grid', gap: 4 }}>
                 <strong>{n.title ?? 'Untitled'}</strong>
-                <div style={{ opacity: 0.8 }}>{n.body ?? ""}</div>
-                <small style={{ opacity: 0.7 }}>{new Date(n.createdAt).toLocaleString()}</small>
+                <div style={{ opacity: 0.8 }}>{n.body ?? ''}</div>
+                <small style={{ opacity: 0.7 }}>
+                  {new Date(n.createdAt).toLocaleString()}
+                </small>
 
                 {n.entityType && n.entityId && (
-                  <a href={`/${n.entityType === 'decision' ? 'decisions' : n.entityType + 's'}/${n.entityId}`}>
+                  <a
+                    href={`/${n.entityType === 'decision' ? 'decisions' : n.entityType + 's'}/${n.entityId}`}
+                  >
                     Open related {n.entityType}
                   </a>
                 )}
               </div>
 
-              {!n.readAt && <button onClick={() => markRead(n.id)}>Mark read</button>}
+              {!n.readAt && (
+                <button onClick={() => markRead(n.id)}>Mark read</button>
+              )}
             </div>
           </li>
         ))}
       </ul>
 
       {nextCursor && (
-        <button onClick={() => load(nextCursor)} style={{ justifySelf: 'start' }}>
+        <button
+          onClick={() => load(nextCursor)}
+          style={{ justifySelf: 'start' }}
+        >
           Load more
         </button>
       )}

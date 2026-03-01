@@ -8,7 +8,6 @@ import { buildAuditService } from '../modules/audit/audit.service';
 import { SSEHub } from '../modules/notifications/sseHub';
 import cors from '@fastify/cors';
 
-
 import { registerAuthRoutes } from '../modules/auth/auth.routes';
 import { registerMeRoutes } from '../modules/auth/me.routes';
 import { registerDecisionRoutes } from '../modules/decisions/decisions.routes';
@@ -20,31 +19,30 @@ import { registerInAppNotificationRoutes } from '../modules/notifications/inapp.
 import { registerOpsRoutes } from '../modules/ops/ops.routes';
 import { OpsDeps } from '../modules/ops/ops.routes';
 
-
 import { buildImpactRepo } from '../modules/impact/impact.repo';
 import { buildOutboxRepo } from '../modules/outbox/outbox.repo';
 import { buildDecisionsRepo } from '../modules/decisions/decisions.repo';
 import { buildAuditRepo } from '../modules/audit/audit.repo';
 import { buildAuthRepo } from '../modules/auth/auth.repo';
 import { buildPolicyEvalRepo } from '../modules/policy/policyEvaluation.repo';
-import { buildInAppRepo, InAppNotificationRow } from '../modules/notifications/inapp.repo';
+import {
+  buildInAppRepo,
+  InAppNotificationRow,
+} from '../modules/notifications/inapp.repo';
 import { buildDlqRepo } from '../modules/ops/dlq.repo';
 import { NotificationsRepo } from '../modules/decisions/decisions.types';
 
 declare module 'fastify' {
   interface FastifyRequest {
-    _startAt?: bigint;  
+    _startAt?: bigint;
   }
 }
-
 
 type AuthRoutesDeps = Parameters<typeof registerAuthRoutes>[1];
 type MeRoutesDeps = Parameters<typeof registerMeRoutes>[1];
 type InAppRoutesDeps = Parameters<typeof registerInAppNotificationRoutes>[1];
-type InAppRoutesRepo = InAppRoutesDeps["inAppRepo"];
+type InAppRoutesRepo = InAppRoutesDeps['inAppRepo'];
 type DecisionDeps = Parameters<typeof registerDecisionRoutes>[1];
-
-
 
 export async function buildApp() {
   const app = Fastify({
@@ -56,10 +54,9 @@ export async function buildApp() {
           }
         : { level: env.LOG_LEVEL },
   });
-  
-  app.decorateRequest('principal');
-  app.decorateRequest('ctx')
 
+  app.decorateRequest('principal');
+  app.decorateRequest('ctx');
 
   await app.register(cors, {
     origin: (origin, cb) => {
@@ -80,38 +77,38 @@ export async function buildApp() {
 
   const auditRepo = buildAuditRepo(sql);
   const audit = buildAuditService(auditRepo);
-  const impactRepo = buildImpactRepo(sql)
+  const impactRepo = buildImpactRepo(sql);
   const dlqRepo = buildDlqRepo(sql);
   const inAppRepo = buildInAppRepo(sql);
 
   const inAppRepoForRoutes = {
-  unreadCount: async (userId: string) =>
-    Number(await inAppRepo.unreadCount(userId)),
+    unreadCount: async (userId: string) =>
+      Number(await inAppRepo.unreadCount(userId)),
 
-  listInbox: async (userId: string, limit: number, cursor?: string) => {
-    const rows = await inAppRepo.listInbox(userId, limit, cursor);
-    const array = Array.from(rows) as InAppNotificationRow[];
+    listInbox: async (userId: string, limit: number, cursor?: string) => {
+      const rows = await inAppRepo.listInbox(userId, limit, cursor);
+      const array = Array.from(rows) as InAppNotificationRow[];
 
-    return array.map((r) => ({
-      id: r.id,
-      type: r.type,
-      title: r.title ?? null,
-      body: r.body ?? null,
-      entityType: r.entityType ?? null,
-      entityId: r.entityId ?? null,
-      createdAt: (r.createdAt ?? new Date()).toISOString(),
-      readAt: r.readAt ? new Date(r.readAt).toISOString() : null,
-    }));
-  },
+      return array.map((r) => ({
+        id: r.id,
+        type: r.type,
+        title: r.title ?? null,
+        body: r.body ?? null,
+        entityType: r.entityType ?? null,
+        entityId: r.entityId ?? null,
+        createdAt: (r.createdAt ?? new Date()).toISOString(),
+        readAt: r.readAt ? new Date(r.readAt).toISOString() : null,
+      }));
+    },
 
-  markRead: (userId: string, id: string) => inAppRepo.markRead(userId, id),
-  markAllRead: (userId: string) => inAppRepo.markAllRead(userId),
-} satisfies InAppRoutesRepo;
+    markRead: (userId: string, id: string) => inAppRepo.markRead(userId, id),
+    markAllRead: (userId: string) => inAppRepo.markAllRead(userId),
+  } satisfies InAppRoutesRepo;
 
-const inAppRepoForDecisions = {
-  insert: (row) => inAppRepo.insert(row),
-  unreadCount: (userId: string) => inAppRepo.unreadCount(userId),
-} satisfies DecisionDeps["inAppRepo"];
+  const inAppRepoForDecisions = {
+    insert: (row) => inAppRepo.insert(row),
+    unreadCount: (userId: string) => inAppRepo.unreadCount(userId),
+  } satisfies DecisionDeps['inAppRepo'];
 
   const sseHub = new SSEHub();
 
@@ -169,30 +166,30 @@ const inAppRepoForDecisions = {
       notificationsRepo: inAppRepoForDecisions as unknown as NotificationsRepo,
       sseHub,
     }),
-);
-
-  await app.register(async (a) =>
-  registerInAppNotificationRoutes(a, {
-    authRepo,
-    policyEvalRepo,
-    inAppRepo: inAppRepoForRoutes, 
-    sseHub,
-  })
-);
-
-  await app.register(async (a) =>
-    registerImpactRoutes(a, {
-      impactRepo,
-      authRepo,
-      policyEvalRepo,
-      audit,
-    }),
-    {prefix: '/impact'}
   );
 
-  const opsDeps: OpsDeps = {authRepo, policyEvalRepo, dlqRepo, audit };
+  await app.register(async (a) =>
+    registerInAppNotificationRoutes(a, {
+      authRepo,
+      policyEvalRepo,
+      inAppRepo: inAppRepoForRoutes,
+      sseHub,
+    }),
+  );
+
+  await app.register(
+    async (a) =>
+      registerImpactRoutes(a, {
+        impactRepo,
+        authRepo,
+        policyEvalRepo,
+        audit,
+      }),
+    { prefix: '/impact' },
+  );
+
+  const opsDeps: OpsDeps = { authRepo, policyEvalRepo, dlqRepo, audit };
   await app.register(async (a) => registerOpsRoutes(a, opsDeps));
- 
 
   // --- request context + correlation
   app.addHook('onRequest', async (req, reply) => {
@@ -233,19 +230,18 @@ const inAppRepoForDecisions = {
 
   await app.register(registerMetricsRoutes);
 
+  app.addHook('onResponse', async (req, reply) => {
+    const route = (req.routeOptions?.url ?? req.url ?? '').split('?')[0];
 
-app.addHook('onResponse', async (req, reply) => {
-  const route = (req.routeOptions?.url ?? req.url ?? '').split('?')[0];
+    const start = req._startAt;
+    if (!start) return;
 
-  const start =  req._startAt 
-  if (!start) return;
+    const durationMs = Number(process.hrtime.bigint() - start) / 1e6;
 
-  const durationMs = Number(process.hrtime.bigint() - start) / 1e6;
-
-  httpRequestDuration
-    .labels(req.method, route, String(reply.statusCode))
-    .observe(durationMs);
-});
+    httpRequestDuration
+      .labels(req.method, route, String(reply.statusCode))
+      .observe(durationMs);
+  });
 
   // --- shutdown
   app.addHook('onClose', async () => {
@@ -255,5 +251,3 @@ app.addHook('onResponse', async (req, reply) => {
 
   return app;
 }
-
-

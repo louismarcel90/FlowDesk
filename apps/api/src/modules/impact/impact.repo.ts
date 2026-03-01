@@ -1,6 +1,6 @@
 import type { Sql } from '../../db/client';
 
-export type InitiativeStatus = "draft" | "active" | "archived";
+export type InitiativeStatus = 'draft' | 'active' | 'archived';
 
 export type Initiative = {
   id: string;
@@ -9,7 +9,7 @@ export type Initiative = {
   description: string;
   status: InitiativeStatus;
   createdBy: string;
-  createdAt: string; 
+  createdAt: string;
 };
 
 type DbInitiativeRow = {
@@ -19,7 +19,7 @@ type DbInitiativeRow = {
   description: string;
   status: string;
   createdBy: string;
-  createdAt: string; 
+  createdAt: string;
 };
 
 type DbMetricRow = {
@@ -28,7 +28,7 @@ type DbMetricRow = {
   name: string;
   unit: string;
   direction: string;
-  createdAt: string; 
+  createdAt: string;
 };
 
 type DbMetricSnapshotRow = {
@@ -45,15 +45,15 @@ export type MetricListItem = {
   name: string;
   unit: string;
   direction: string;
-  createdAt: string; 
+  createdAt: string;
 };
 
 export type MetricSnapshot = {
   id: string;
-  occurredAt: string; 
+  occurredAt: string;
   value: number;
   source: string;
-  createdAt: string; 
+  createdAt: string;
 };
 
 type DbDecisionLinkRow = {
@@ -74,27 +74,37 @@ export type DecisionLinkItem = {
   id: string;
   initiativeId: string;
   initiativeName: string;
-  createdAt: string; 
+  createdAt: string;
 };
 
 export type DecisionListItem = {
   id: string;
   title: string;
   status: string;
-  createdAt: string; 
+  createdAt: string;
 };
 
 function toIsoOrNull(v: unknown): string | null {
-  if (v === null || v === undefined || v === "") return null;
-  const d = v instanceof Date ? v: typeof v === "number" ? new Date(v): new Date(String(v));
+  if (v === null || v === undefined || v === '') return null;
+  const d =
+    v instanceof Date
+      ? v
+      : typeof v === 'number'
+        ? new Date(v)
+        : new Date(String(v));
   return Number.isNaN(d.getTime()) ? null : d.toISOString();
 }
 
-
-
 export function buildImpactRepo(sql: Sql) {
   return {
-    async createInitiative(p: { id: string; orgId: string; name: string; description: string; status: string; createdBy: string }) {
+    async createInitiative(p: {
+      id: string;
+      orgId: string;
+      name: string;
+      description: string;
+      status: string;
+      createdBy: string;
+    }) {
       await sql`
         insert into initiatives (id, org_id, name, description, status, created_by)
         values (${p.id}, ${p.orgId}, ${p.name}, ${p.description}, ${p.status}, ${p.createdBy})
@@ -102,7 +112,7 @@ export function buildImpactRepo(sql: Sql) {
     },
 
     async listInitiatives(orgId: string): Promise<Initiative[]> {
-    const rows = await sql<DbInitiativeRow[]>`
+      const rows = await sql<DbInitiativeRow[]>`
       select 
         id, 
         org_id, 
@@ -117,48 +127,61 @@ export function buildImpactRepo(sql: Sql) {
       limit 100
     `;
 
-  return rows.map((r): Initiative => ({
-    id: r.id,
-    orgId: r.org_id,
-    name: r.name,
-    description: r.description ?? null,
-    status: r.status as InitiativeStatus,
-    createdBy: r.createdBy ?? null,
-    createdAt: toIsoOrNull(r.createdAt) ?? "",
-  }));
-},
+      return rows.map(
+        (r): Initiative => ({
+          id: r.id,
+          orgId: r.org_id,
+          name: r.name,
+          description: r.description ?? null,
+          status: r.status as InitiativeStatus,
+          createdBy: r.createdBy ?? null,
+          createdAt: toIsoOrNull(r.createdAt) ?? '',
+        }),
+      );
+    },
 
     async getInitiative(orgId: string, id: string): Promise<Initiative | null> {
-  const rows = await sql<DbInitiativeRow[]>`
+      const rows = await sql<DbInitiativeRow[]>`
     select id, org_id, name, description, status, created_at
     from initiatives
     where org_id = ${orgId} and id = ${id}
     limit 1
   `;
 
-  const r = rows[0];
-  if (!r) return null;
+      const r = rows[0];
+      if (!r) return null;
 
-  return {
-    id: r.id,
-    orgId: r.org_id,
-    name: r.name,
-    description: r.description,
-    status: r.status as InitiativeStatus,
-    createdBy: r.createdBy,
-    createdAt: toIsoOrNull(r.createdAt) ?? "",
-  };
-},
+      return {
+        id: r.id,
+        orgId: r.org_id,
+        name: r.name,
+        description: r.description,
+        status: r.status as InitiativeStatus,
+        createdBy: r.createdBy,
+        createdAt: toIsoOrNull(r.createdAt) ?? '',
+      };
+    },
 
-    async createMetric(p: { id: string; orgId: string; initiativeId?: string; name: string; unit: string; direction: string; createdBy: string }) {
+    async createMetric(p: {
+      id: string;
+      orgId: string;
+      initiativeId?: string;
+      name: string;
+      unit: string;
+      direction: string;
+      createdBy: string;
+    }) {
       await sql`
         insert into metrics (id, org_id, initiative_id, name, unit, direction, created_by)
         values (${p.id}, ${p.orgId}, ${p.initiativeId ?? null}, ${p.name}, ${p.unit}, ${p.direction}, ${p.createdBy})
       `;
     },
 
-    async listMetrics(orgId: string, opts?: { initiativeId?: string }): Promise<MetricListItem[]> {
-  const rows = await sql<DbMetricRow[]>`
+    async listMetrics(
+      orgId: string,
+      opts?: { initiativeId?: string },
+    ): Promise<MetricListItem[]> {
+      const rows = await sql<DbMetricRow[]>`
     select id, initiative_id, name, unit, direction, created_at
     from metrics
     where org_id = ${orgId}
@@ -167,18 +190,21 @@ export function buildImpactRepo(sql: Sql) {
     limit 200
   `;
 
-  return rows.map((r) => ({
-    id: r.id,
-    initiativeId: r.initiativeId,
-    name: r.name,
-    unit: r.unit,
-    direction: r.direction,
-    createdAt: toIsoOrNull(r.createdAt) ?? "",
-  }));
-},
+      return rows.map((r) => ({
+        id: r.id,
+        initiativeId: r.initiativeId,
+        name: r.name,
+        unit: r.unit,
+        direction: r.direction,
+        createdAt: toIsoOrNull(r.createdAt) ?? '',
+      }));
+    },
 
-async listMetricsByInitiative(orgId: string, initiativeId: string): Promise<MetricListItem[]> {
-  const rows = await sql<DbMetricRow[]>`
+    async listMetricsByInitiative(
+      orgId: string,
+      initiativeId: string,
+    ): Promise<MetricListItem[]> {
+      const rows = await sql<DbMetricRow[]>`
     select id, initiative_id, name, unit, direction, created_at
     from metrics
     where org_id = ${orgId}
@@ -187,25 +213,35 @@ async listMetricsByInitiative(orgId: string, initiativeId: string): Promise<Metr
     limit 200
   `;
 
-  return rows.map((r) => ({
-    id: r.id,
-    initiativeId: r.initiativeId,
-    name: r.name,
-    unit: r.unit,
-    direction: r.direction,
-    createdAt: toIsoOrNull(r.createdAt) ?? "",
-  }));
-},
+      return rows.map((r) => ({
+        id: r.id,
+        initiativeId: r.initiativeId,
+        name: r.name,
+        unit: r.unit,
+        direction: r.direction,
+        createdAt: toIsoOrNull(r.createdAt) ?? '',
+      }));
+    },
 
-    async createSnapshot(p: { id: string; metricId: string; occurredAt: Date; value: number; source: string; createdBy: string }) {
+    async createSnapshot(p: {
+      id: string;
+      metricId: string;
+      occurredAt: Date;
+      value: number;
+      source: string;
+      createdBy: string;
+    }) {
       await sql`
         insert into metric_snapshots (id, metric_id, occurred_at, value, source, created_by)
         values (${p.id}, ${p.metricId}, ${p.occurredAt}, ${p.value}, ${p.source}, ${p.createdBy})
       `;
     },
 
-    async getLatestSnapshots(metricId: string, limit = 30): Promise<MetricSnapshot[]> {
-  const rows = await sql<DbMetricSnapshotRow[]>`
+    async getLatestSnapshots(
+      metricId: string,
+      limit = 30,
+    ): Promise<MetricSnapshot[]> {
+      const rows = await sql<DbMetricSnapshotRow[]>`
     select id, occurred_at, value, source, created_at
     from metric_snapshots
     where metric_id = ${metricId}
@@ -213,16 +249,22 @@ async listMetricsByInitiative(orgId: string, initiativeId: string): Promise<Metr
     limit ${limit}
   `;
 
-  return rows.map((r) => ({
-    id: r.id,
-    occurredAt: new Date(r.occurred_at).toISOString(),
-    value: r.value,
-    source: r.source,
-    createdAt: toIsoOrNull(r.createdAt) ?? "",
-  }));
-},
+      return rows.map((r) => ({
+        id: r.id,
+        occurredAt: new Date(r.occurred_at).toISOString(),
+        value: r.value,
+        source: r.source,
+        createdAt: toIsoOrNull(r.createdAt) ?? '',
+      }));
+    },
 
-    async linkDecision(p: { id: string; orgId: string; decisionId: string; initiativeId: string; createdBy: string }) {
+    async linkDecision(p: {
+      id: string;
+      orgId: string;
+      decisionId: string;
+      initiativeId: string;
+      createdBy: string;
+    }) {
       await sql`
         insert into decision_links (id, org_id, decision_id, initiative_id, created_by)
         values (${p.id}, ${p.orgId}, ${p.decisionId}, ${p.initiativeId}, ${p.createdBy})
@@ -230,8 +272,10 @@ async listMetricsByInitiative(orgId: string, initiativeId: string): Promise<Metr
       `;
     },
 
-    async listLinksForDecision(decisionId: string): Promise<DecisionLinkItem[]> {
-  const rows = await sql<DbDecisionLinkRow[]>`
+    async listLinksForDecision(
+      decisionId: string,
+    ): Promise<DecisionLinkItem[]> {
+      const rows = await sql<DbDecisionLinkRow[]>`
     select
       l.id,
       l.initiative_id,
@@ -243,16 +287,18 @@ async listMetricsByInitiative(orgId: string, initiativeId: string): Promise<Metr
     order by l.created_at desc
   `;
 
-  return rows.map((r) => ({
-    id: r.id,
-    initiativeId: r.initiative_id,
-    initiativeName: r.initiative_name,
-    createdAt: toIsoOrNull(r.createdAt) ?? "",
-  }));
-},
+      return rows.map((r) => ({
+        id: r.id,
+        initiativeId: r.initiative_id,
+        initiativeName: r.initiative_name,
+        createdAt: toIsoOrNull(r.createdAt) ?? '',
+      }));
+    },
 
-    async listDecisionsForInitiative(initiativeId: string): Promise<DecisionListItem[]> {
-    const rows = await sql<DbDecisionListRow[]>`
+    async listDecisionsForInitiative(
+      initiativeId: string,
+    ): Promise<DecisionListItem[]> {
+      const rows = await sql<DbDecisionListRow[]>`
     select d.id, d.title, d.status, d.created_at
     from decision_links l
     join decisions d on d.id = l.decision_id
@@ -260,13 +306,12 @@ async listMetricsByInitiative(orgId: string, initiativeId: string): Promise<Metr
     order by d.created_at desc
   `;
 
-  return rows.map((r) => ({
-    id: r.id,
-    title: r.title,
-    status: r.status,
-    createdAt: toIsoOrNull(r.createdAt) ?? "",
-  }));
-}
+      return rows.map((r) => ({
+        id: r.id,
+        title: r.title,
+        status: r.status,
+        createdAt: toIsoOrNull(r.createdAt) ?? '',
+      }));
+    },
   };
 }
- 

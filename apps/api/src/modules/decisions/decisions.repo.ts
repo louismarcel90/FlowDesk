@@ -1,9 +1,9 @@
-import type { Sql } from "../../db/client";
+import type { Sql } from '../../db/client';
 
 import {
   DecisionStatusSchema,
   DecisionVersionPayload as DecisionVersionPayloadSchema,
-} from "./decisions.schemas";
+} from './decisions.schemas';
 
 import type {
   Decision,
@@ -13,7 +13,7 @@ import type {
   DecisionStatus,
   DecisionVersion,
   DecisionVersionPayload,
-} from "./decisions.types";
+} from './decisions.types';
 
 type DbDecisionRow = {
   id: string;
@@ -39,7 +39,7 @@ type DbDecisionVersionRow = {
   decision_id: string;
   version: number;
   created_by: string;
-  created_at: string; 
+  created_at: string;
   context: unknown;
   options: unknown;
   tradeoffs: unknown;
@@ -105,7 +105,10 @@ export function buildDecisionsRepo(sql: Sql): DecisionsRepo {
       }));
     },
 
-    async getDecision(decisionId: string, orgId: string): Promise<Decision | null> {
+    async getDecision(
+      decisionId: string,
+      orgId: string,
+    ): Promise<Decision | null> {
       const rows = await sql<DbDecisionRow[]>`
         select *
         from decisions
@@ -165,15 +168,17 @@ export function buildDecisionsRepo(sql: Sql): DecisionsRepo {
     },
 
     async getComments(decisionId: string): Promise<DecisionComment[]> {
-  const rows = await sql<{
-    id: string;
-    decision_id: string;
-    created_at: Date;
-    body: string;
-    user_id: string;
-    display_name: string | null;
-    role: string | null;
-  }[]>`
+      const rows = await sql<
+        {
+          id: string;
+          decision_id: string;
+          created_at: Date;
+          body: string;
+          user_id: string;
+          display_name: string | null;
+          role: string | null;
+        }[]
+      >`
     select 
       c.id,
       c.decision_id,
@@ -190,18 +195,18 @@ export function buildDecisionsRepo(sql: Sql): DecisionsRepo {
     order by c.created_at asc
   `;
 
-  return rows.map((r) => ({
-    id: r.id,
-    decisionId: r.decision_id,
-    createdAt: r.created_at,
-    body: r.body,
-    author: {
-      userId: r.user_id,
-      displayName: r.display_name,
-      role: r.role,
+      return rows.map((r) => ({
+        id: r.id,
+        decisionId: r.decision_id,
+        createdAt: r.created_at,
+        body: r.body,
+        author: {
+          userId: r.user_id,
+          displayName: r.display_name,
+          role: r.role,
+        },
+      }));
     },
-  }));
-},
 
     async approveDecision(input): Promise<void> {
       await sql`
@@ -217,7 +222,7 @@ export function buildDecisionsRepo(sql: Sql): DecisionsRepo {
 
     async updateDecisionStatus(input): Promise<void> {
       // Si approved → set approved_by/approved_at
-      if (input.status === "approved") {
+      if (input.status === 'approved') {
         await sql`
           update decisions
           set status = ${input.status},

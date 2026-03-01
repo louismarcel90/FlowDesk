@@ -5,6 +5,7 @@
 This document defines the standard operating procedure for identifying, classifying, mitigating, and resolving production incidents in FlowDesk.
 
 It ensures:
+
 - Fast mitigation
 - Clear ownership
 - Traceability
@@ -16,6 +17,7 @@ It ensures:
 # 1️⃣ Incident Severity Levels
 
 ## SEV-1 (Critical)
+
 - Platform unavailable
 - Data loss
 - Security breach
@@ -27,6 +29,7 @@ It ensures:
 ---
 
 ## SEV-2 (Major)
+
 - Partial outage (API degraded)
 - Notifications failing for majority of users
 - DLQ growing rapidly
@@ -37,6 +40,7 @@ It ensures:
 ---
 
 ## SEV-3 (Minor)
+
 - Non-critical feature broken
 - UI inconsistency
 - Non-blocking error
@@ -50,6 +54,7 @@ It ensures:
 ## Step 1 — Detection
 
 Detection sources:
+
 - Grafana dashboards
 - Prometheus alerts
 - Error logs
@@ -77,17 +82,20 @@ Assign severity level (SEV-1/2/3).
 Examples:
 
 ### API failure
+
 - Restart API
 - Check database connectivity
 - Rollback to previous release
 
 ### Notification failure
+
 - Check delivery worker logs
 - Inspect `notification_jobs`
 - Inspect `notification_dlq`
 - Restart worker if stuck
 
 ### Kafka issue
+
 - Check Redpanda container
 - Verify topic health
 - Restart publisher/orchestrator
@@ -136,3 +144,4 @@ SQL:
 
 ```sql
 select * from notification_jobs where status != 'done';
+```

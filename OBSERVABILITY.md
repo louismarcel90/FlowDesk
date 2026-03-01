@@ -12,9 +12,11 @@
 # 1️⃣ Metrics
 
 Exposed endpoint:
+
 - GET /metrics (Prometheus format)
 
 Tracked:
+
 - flowdesk_http_request_duration_ms
 - Notification retry counts
 - DLQ growth
@@ -28,6 +30,7 @@ Tracked:
 - /readyz → readiness
 
 Used by:
+
 - Load balancers
 - Container orchestrators
 - CI smoke tests
@@ -37,12 +40,14 @@ Used by:
 # 3️⃣ Logging
 
 All logs:
+
 - Structured JSON
 - Include correlation_id
 - Include notification_id when relevant
 - Include job_id when relevant
 
 Workers log:
+
 - Publish events
 - Orchestration events
 - Delivery attempts
@@ -54,9 +59,10 @@ Workers log:
 # 4️⃣ Dashboards
 
 Prometheus → http://localhost:9090  
-Grafana → http://localhost:3005  
+Grafana → http://localhost:3005
 
 Dashboards should track:
+
 - HTTP latency p95
 - Error rate
 - Job retry rate
@@ -68,6 +74,7 @@ Dashboards should track:
 # 5️⃣ Alerting Strategy (Future)
 
 Critical alerts:
+
 - DLQ count > threshold
 - Delivery error rate > 5%
 - API latency p95 > 1s
@@ -78,13 +85,16 @@ Critical alerts:
 # 6️⃣ Correlation & Tracing
 
 Each request generates:
+
 - correlation_id
 
 Propagated to:
+
 - Outbox event
 - Kafka event
 - Notification
 - Email headers
 
 Allows:
+
 - End-to-end traceability

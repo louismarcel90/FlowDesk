@@ -58,7 +58,6 @@ export const STATUS_STYLES: Record<
   },
 };
 
-
 export type StatusStyle = { bg: string; border: string; text: string };
 
 export function getStatusStyle(status: DecisionStatus): StatusStyle {
@@ -71,18 +70,17 @@ export function badgeStyle(status: DecisionStatus): React.CSSProperties {
     background: s.bg,
     border: `1px solid ${s.border}`,
     color: s.text,
-    padding: "4px 10px",
+    padding: '4px 10px',
     borderRadius: 9999,
     fontWeight: 600,
-    letterSpacing: "0.2px",
-    display: "inline-flex",
-    alignItems: "center",
+    letterSpacing: '0.2px',
+    display: 'inline-flex',
+    alignItems: 'center',
     gap: 8,
-    boxShadow: "0 10px 30px rgba(0,0,0,0.25)",
-    backdropFilter: "blur(10px)",
+    boxShadow: '0 10px 30px rgba(0,0,0,0.25)',
+    backdropFilter: 'blur(10px)',
   };
 }
-
 
 export function statusLabel(s: DecisionStatus) {
   return s.charAt(0).toUpperCase() + s.slice(1);
@@ -250,7 +248,7 @@ export default function DecisionDetailPage() {
         </ol>
       </section>
 
-            {/* Comments */}
+      {/* Comments */}
       <section
         style={{
           border: '1px solid var(--border)',
@@ -263,7 +261,9 @@ export default function DecisionDetailPage() {
           boxShadow: 'var(--shadow-sm)',
         }}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+        <div
+          style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}
+        >
           <div>
             <h2 style={{ margin: 0 }}>Comments</h2>
             <div style={{ color: 'var(--muted)', fontSize: 12, marginTop: 4 }}>
@@ -288,7 +288,7 @@ export default function DecisionDetailPage() {
         </div>
 
         {/* List */}
-        {(!data.comments || data.comments.length === 0) ? (
+        {!data.comments || data.comments.length === 0 ? (
           <div
             style={{
               border: '1px dashed rgba(255,255,255,0.14)',
@@ -315,8 +315,16 @@ export default function DecisionDetailPage() {
                   gap: 8,
                 }}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    gap: 10,
+                  }}
+                >
+                  <div
+                    style={{ display: 'flex', alignItems: 'center', gap: 10 }}
+                  >
                     <div
                       aria-hidden
                       style={{
@@ -331,12 +339,19 @@ export default function DecisionDetailPage() {
                     />
                     <div style={{ display: 'grid' }}>
                       <span style={{ fontWeight: 800, fontSize: 13 }}>
-                         { c.author.displayName || 'Unknown user'}
-                         {c.author.role && (
-                            <div style={{fontSize: 11,fontWeight: 'lighter', opacity: 0.7,marginTop: 1}}>
-                              {c.author.role}
-                            </div>
-                          )}
+                        {c.author.displayName || 'Unknown user'}
+                        {c.author.role && (
+                          <div
+                            style={{
+                              fontSize: 11,
+                              fontWeight: 'lighter',
+                              opacity: 0.7,
+                              marginTop: 1,
+                            }}
+                          >
+                            {c.author.role}
+                          </div>
+                        )}
                       </span>
                       <small style={{ color: 'var(--muted)', fontSize: 12 }}>
                         {new Date(c.createdAt).toLocaleString('en-US', {
@@ -351,7 +366,13 @@ export default function DecisionDetailPage() {
                   </div>
 
                   {/* (Optionnel) actions */}
-                  <div style={{ color: 'var(--faint)', fontSize: 12, alignSelf: 'center' }}>
+                  <div
+                    style={{
+                      color: 'var(--faint)',
+                      fontSize: 12,
+                      alignSelf: 'center',
+                    }}
+                  >
                     #{String(c.id).slice(0, 6)}
                   </div>
                 </div>
@@ -381,7 +402,13 @@ export default function DecisionDetailPage() {
             gap: 10,
           }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              gap: 10,
+            }}
+          >
             <div style={{ fontSize: 12, color: 'var(--muted)' }}>
               Tip: Use short paragraphs. Keep it actionable.
             </div>
@@ -431,7 +458,10 @@ export default function DecisionDetailPage() {
                   busy === 'comment' || !comment.trim()
                     ? 'rgba(255,255,255,0.06)'
                     : 'linear-gradient(135deg, rgba(109,94,252,0.92), rgba(57,214,255,0.35))',
-                color: busy === 'comment' || !comment.trim() ? 'rgba(255,255,255,0.55)' : '#fff',
+                color:
+                  busy === 'comment' || !comment.trim()
+                    ? 'rgba(255,255,255,0.55)'
+                    : '#fff',
                 boxShadow:
                   busy === 'comment' || !comment.trim()
                     ? 'none'

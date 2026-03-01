@@ -1,47 +1,60 @@
 'use client';
-import { useEffect, useRef, useState } from "react";
-import { apiFetch } from "../../../lib/api"; // adapte si besoin
-import Link from "next/link";
+import { useEffect, useRef, useState } from 'react';
+import { apiFetch } from '../../../lib/api'; // adapte si besoin
+import Link from 'next/link';
 
 type Props = { id: string };
 
 export default function InitiativeDetailClient({ id }: Props) {
-
   const [data, setData] = useState<any>(null);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
 
-useEffect(() => {
-  let cancelled = false;
+  useEffect(() => {
+    let cancelled = false;
 
-  (async () => {
-    try {
-      const initiativeJson = await apiFetch(`/impact/initiatives/${id}`);
+    (async () => {
+      try {
+        const initiativeJson = await apiFetch(`/impact/initiatives/${id}`);
 
-      const metricsJson = await apiFetch(`/impact/metrics?initiativeId=${encodeURIComponent(id)}`);
+        const metricsJson = await apiFetch(
+          `/impact/metrics?initiativeId=${encodeURIComponent(id)}`,
+        );
 
-      if (!cancelled) {
-        setData({ ...initiativeJson, metrics: metricsJson });
-        setError(null);
+        if (!cancelled) {
+          setData({ ...initiativeJson, metrics: metricsJson });
+          setError(null);
+        }
+      } catch (e: any) {
+        if (!cancelled) setError(String(e?.message ?? e));
       }
-    } catch (e: any) {
-      if (!cancelled) setError(String(e?.message ?? e));
-    }
-  })();
+    })();
 
-  return () => {
-    cancelled = true;
-  };
-}, [id]);
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
 
-  if (error) return <main><p style={{ color: "crimson" }}>{error}</p></main>;
-  if (!data) return <main><p>Loading...</p></main>;
+  if (error)
+    return (
+      <main>
+        <p style={{ color: 'crimson' }}>{error}</p>
+      </main>
+    );
+  if (!data)
+    return (
+      <main>
+        <p>Loading...</p>
+      </main>
+    );
 
   return (
-    <main style={{ display: "grid", gap: 16 }}>
+    <main style={{ display: 'grid', gap: 16 }}>
       <h1>{data.initiative?.name}</h1>
       <p>{data.initiative?.description}</p>
 
-      <section style={{ border: "1px solid #ddd", padding: 12, borderRadius: 8 }}>
+      <section
+        style={{ border: '1px solid #ddd', padding: 12, borderRadius: 8 }}
+      >
         <h2>Linked Decisions</h2>
         <ul>
           {(data.decisions ?? []).map((d: any) => (
@@ -52,7 +65,9 @@ useEffect(() => {
         </ul>
       </section>
 
-      <section style={{ border: "1px solid #ddd", padding: 12, borderRadius: 8 }}>
+      <section
+        style={{ border: '1px solid #ddd', padding: 12, borderRadius: 8 }}
+      >
         <h2>Metrics</h2>
         <ul>
           {(data.metrics ?? []).map((m: any) => (

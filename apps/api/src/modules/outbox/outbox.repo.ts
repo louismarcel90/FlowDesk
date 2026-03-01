@@ -17,6 +17,6 @@ export function buildOutboxRepo(sql: Sql) {
         insert into outbox_events (id, occurred_at, aggregate_type, aggregate_id, event_type, payload, correlation_id)
         values (${e.id}, now(), ${e.aggregateType}, ${e.aggregateId}, ${e.eventType}, ${sql.json(e.payload)}, ${e.correlationId})
       `;
-    }
+    },
   };
 }
