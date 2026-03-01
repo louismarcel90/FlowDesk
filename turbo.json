@@ -1,4 +1,14 @@
 {
+  "envMode": "strict",
+  "globalEnv": [
+    "NODE_ENV",
+    "JWT_ACCESS_SECRET",
+    "JWT_REFRESH_SECRET",
+    "DATABASE_URL",
+    "REDIS_URL",
+    "OPA_URL"
+  ],
+
   "tasks": {
     "lint": { "dependsOn": ["^lint"] },
     "build": { "dependsOn": ["^build"] },
