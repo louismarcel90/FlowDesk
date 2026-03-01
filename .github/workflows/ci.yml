@@ -1,4 +1,5 @@
 # name: CI
+
 # on:
 #   pull_request:
 #   push:
@@ -7,21 +8,47 @@
 # jobs:
 #   build:
 #     runs-on: ubuntu-latest
+
 #     steps:
-#       - uses: actions/checkout@v4
-#       - uses: pnpm/action-setup@v4
+#       - name: Checkout
+#         uses: actions/checkout@v4
+
+#       - name: Setup pnpm
+#         uses: pnpm/action-setup@v4
 #         with:
 #           version: 10.28.2
-#       - uses: actions/setup-node@v4
+
+#       - name: Setup Node
+#         uses: actions/setup-node@v4
 #         with:
 #           node-version: 20
-#           cache: 'pnpm'
-#       - run: pnpm install --frozen-lockfile
-#       - run: pnpm format:check
-#       - run: pnpm run lint
-#       - run: pnpm run typecheck
-#       - run: pnpm run test
-#       - run: pnpm run build
+#           cache: pnpm
+
+#       - name: Install dependencies
+#         run: pnpm install --frozen-lockfile
+
+#       - name: Format check
+#         run: pnpm format:check
+
+#       - name: Lint
+#         run: pnpm run lint
+
+#       - name: Typecheck
+#         run: pnpm run typecheck
+
+#       - name: Test
+#         run: pnpm run test
+#         env:
+#           NODE_ENV: test
+#           JWT_ACCESS_SECRET: test_access_secret_32_chars_min________
+#           JWT_REFRESH_SECRET: test_refresh_secret_32_chars_min_______
+#           DATABASE_URL: postgresql://user:pass@localhost:5432/flowdesk_test
+#           REDIS_URL: redis://localhost:6379
+#           OPA_URL: http://localhost:8181
+
+#       - name: Build
+#         run: pnpm run build
+
 
 name: CI
 
@@ -33,6 +60,39 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: flowdesk_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres -d flowdesk_test"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+      opa:
+        image: openpolicyagent/opa:latest
+        ports:
+          - 8181:8181
+        options: >-
+          --entrypoint /opa
+          run --server --addr=0.0.0.0:8181
 
     steps:
       - name: Checkout
@@ -64,12 +124,13 @@ jobs:
       - name: Test
         run: pnpm run test
         env:
+          TURBO_ENV_MODE: loose
           NODE_ENV: test
           JWT_ACCESS_SECRET: test_access_secret_32_chars_min________
           JWT_REFRESH_SECRET: test_refresh_secret_32_chars_min_______
-          DATABASE_URL: postgresql://user:pass@localhost:5432/flowdesk_test
-          REDIS_URL: redis://localhost:6379
-          OPA_URL: http://localhost:8181
+          DATABASE_URL: postgresql://postgres:postgres@postgres:5432/flowdesk_test
+          REDIS_URL: redis://redis:6379
+          OPA_URL: http://opa:8181
 
       - name: Build
         run: pnpm run build
