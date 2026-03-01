@@ -1,4 +1,30 @@
+# name: CI
+# on:
+#   pull_request:
+#   push:
+#     branches: [main, develop]
+
+# jobs:
+#   build:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v4
+#       - uses: pnpm/action-setup@v4
+#         with:
+#           version: 10.28.2
+#       - uses: actions/setup-node@v4
+#         with:
+#           node-version: 20
+#           cache: 'pnpm'
+#       - run: pnpm install --frozen-lockfile
+#       - run: pnpm format:check
+#       - run: pnpm run lint
+#       - run: pnpm run typecheck
+#       - run: pnpm run test
+#       - run: pnpm run build
+
 name: CI
+
 on:
   pull_request:
   push:
@@ -7,18 +33,43 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
         with:
           version: 10.28.2
-      - uses: actions/setup-node@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'pnpm'
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm format:check
-      - run: pnpm run lint
-      - run: pnpm run typecheck
-      - run: pnpm run test
-      - run: pnpm run build
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Format check
+        run: pnpm format:check
+
+      - name: Lint
+        run: pnpm run lint
+
+      - name: Typecheck
+        run: pnpm run typecheck
+
+      - name: Test
+        run: pnpm run test
+        env:
+          NODE_ENV: test
+          JWT_ACCESS_SECRET: test_access_secret_32_chars_min________
+          JWT_REFRESH_SECRET: test_refresh_secret_32_chars_min_______
+          DATABASE_URL: postgresql://user:pass@localhost:5432/flowdesk_test
+          REDIS_URL: redis://localhost:6379
+          OPA_URL: http://localhost:8181
+
+      - name: Build
+        run: pnpm run build
