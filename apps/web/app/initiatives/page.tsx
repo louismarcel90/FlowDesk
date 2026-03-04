@@ -9,6 +9,7 @@ type Initiative = {
   id: string;
   name: string;
   description?: string | null;
+  linkedDecisionsCount?: number;
   status: string;
   createdAt?: string;
   decision?: Decision;
@@ -243,7 +244,9 @@ export default function InitiativesPage() {
                       </div>
                       <div>
                         <span className="fd-meta">
-                          {i.decision?.title ?? 'no decision linked'}
+                          {(i.linkedDecisionsCount ?? 0) > 0
+                            ? `${i.linkedDecisionsCount} decision${i.linkedDecisionsCount > 1 ? 's' : ''} linked`
+                            : 'no decision linked'}{' '}
                         </span>
                       </div>
                       {i.createdAt && (

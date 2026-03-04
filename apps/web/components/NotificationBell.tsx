@@ -216,7 +216,7 @@
 //     const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 //     const url = `${API_URL}/notifications/stream?access_token=${encodeURIComponent(token)}`;
 
-//     const es = new EventSource(url); 
+//     const es = new EventSource(url);
 
 //     const onUnread = (e: MessageEvent) => {
 //       try {
@@ -567,7 +567,6 @@
 //   );
 // }
 
-
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -614,8 +613,10 @@ function formatDate(iso: string) {
 
 // map entity -> URL (à étendre si tu ajoutes d’autres entityType)
 function getNotificationHref(n: InboxItem): string | null {
-  if (n.entityType === 'decision' && n.entityId) return `/decisions/${n.entityId}`;
-  if (n.entityType === 'initiative' && n.entityId) return `/impact/initiatives/${n.entityId}`;
+  if (n.entityType === 'decision' && n.entityId)
+    return `/decisions/${n.entityId}`;
+  if (n.entityType === 'initiative' && n.entityId)
+    return `/impact/initiatives/${n.entityId}`;
   return null;
 }
 
@@ -628,18 +629,18 @@ export default function NotificationBell() {
   // const [unreadCount, setUnreadCount] = useState<number>(() => readCachedUnread());
   const [unreadCount, setUnreadCount] = useState<number>(0);
 
-useEffect(() => {
-  // après hydration seulement
-  setUnreadCount(readCachedUnread());
-}, []);
+  useEffect(() => {
+    // après hydration seulement
+    setUnreadCount(readCachedUnread());
+  }, []);
   const [items, setItems] = useState<InboxItem[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [authToken, setAuthToken] = useState<string | null>(null);
 
   useEffect(() => {
-  // au mount, on sync une fois
-  setAuthToken(getAccessToken() ?? null);
-}, []);
+    // au mount, on sync une fois
+    setAuthToken(getAccessToken() ?? null);
+  }, []);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
@@ -666,23 +667,25 @@ useEffect(() => {
   async function refreshUnread() {
     const token = getAccessToken();
 
-    // ✅ Logged out => pas d'appel réseau => pas de 401 console.
     if (!token) {
       setUnreadCount(readCachedUnread());
       return;
     }
 
     try {
-      const res = await apiFetch<{ unreadCount: number }>('/notifications/unread-count');
+      const res = await apiFetch<{ unreadCount: number }>(
+        '/notifications/unread-count',
+      );
       const count = res?.unreadCount ?? 0;
       setUnreadCount(count);
       writeCachedUnread(count);
-    } catch {
-      // non bloquant
-    }
+    } catch {}
   }
 
-  async function loadInbox(opts?: { append?: boolean; cursor?: string | null }) {
+  async function loadInbox(opts?: {
+    append?: boolean;
+    cursor?: string | null;
+  }) {
     setError('');
     setLoading(true);
 
@@ -720,13 +723,18 @@ useEffect(() => {
     });
 
     setItems((prev) =>
-      prev.map((x) => (x.id === n.id ? { ...x, readAt: new Date().toISOString() } : x)),
+      prev.map((x) =>
+        x.id === n.id ? { ...x, readAt: new Date().toISOString() } : x,
+      ),
     );
 
     try {
-      const res = await apiFetch<{ ok: boolean; unreadCount?: number }>(`/notifications/${n.id}/read`, {
-        method: 'POST',
-      });
+      const res = await apiFetch<{ ok: boolean; unreadCount?: number }>(
+        `/notifications/${n.id}/read`,
+        {
+          method: 'POST',
+        },
+      );
 
       if (typeof res?.unreadCount === 'number') {
         setUnreadCount(res.unreadCount);
@@ -746,12 +754,19 @@ useEffect(() => {
     // optimiste
     setUnreadCount(0);
     writeCachedUnread(0);
-    setItems((prev) => prev.map((x) => (x.readAt ? x : { ...x, readAt: new Date().toISOString() })));
+    setItems((prev) =>
+      prev.map((x) =>
+        x.readAt ? x : { ...x, readAt: new Date().toISOString() },
+      ),
+    );
 
     try {
-      const res = await apiFetch<{ ok: boolean; unreadCount?: number }>('/notifications/read-all', {
-        method: 'POST',
-      });
+      const res = await apiFetch<{ ok: boolean; unreadCount?: number }>(
+        '/notifications/read-all',
+        {
+          method: 'POST',
+        },
+      );
 
       if (typeof res?.unreadCount === 'number') {
         setUnreadCount(res.unreadCount);
@@ -772,7 +787,11 @@ useEffect(() => {
     // sync token if storage changes (other tab) OR app updates it.
     const onStorage = (e: StorageEvent) => {
       // si ton getAccessToken lit localStorage/cookies, on resnapshot.
-      if (!e.key || e.key.toLowerCase().includes('token') || e.key.toLowerCase().includes('auth')) {
+      if (
+        !e.key ||
+        e.key.toLowerCase().includes('token') ||
+        e.key.toLowerCase().includes('auth')
+      ) {
         setAuthToken(getAccessToken() ?? null);
       }
     };
@@ -860,7 +879,10 @@ useEffect(() => {
   const MAX_VISIBLE_NOTIFS = 5;
   const NOTIF_CARD_HEIGHT = 96;
   const DROPDOWN_MAX_HEIGHT =
-    58 /* header */ + 24 /* padding */ + MAX_VISIBLE_NOTIFS * NOTIF_CARD_HEIGHT + 56; /* footer */
+    58 /* header */ +
+    24 /* padding */ +
+    MAX_VISIBLE_NOTIFS * NOTIF_CARD_HEIGHT +
+    56; /* footer */
 
   const isLoggedIn = !!authToken;
 
@@ -945,7 +967,10 @@ useEffect(() => {
                   border: 'none',
                   color: 'rgba(255,255,255,0.85)',
                   textDecoration: 'underline',
-                  cursor: !isLoggedIn || unreadCount === 0 ? 'not-allowed' : 'pointer',
+                  cursor:
+                    !isLoggedIn || unreadCount === 0
+                      ? 'not-allowed'
+                      : 'pointer',
                   fontWeight: 600,
                   opacity: !isLoggedIn || unreadCount === 0 ? 0.5 : 1,
                 }}
@@ -993,7 +1018,8 @@ useEffect(() => {
                   fontWeight: 600,
                 }}
               >
-                You are logged out. Showing last known unread count only. Login to view your inbox.
+                You are logged out. Showing last known unread count only. Login
+                to view your inbox.
               </div>
             )}
 
@@ -1012,10 +1038,16 @@ useEffect(() => {
               </div>
             )}
 
-            {loading && <div style={{ padding: 10, color: 'rgba(255,255,255,0.75)' }}>Loading…</div>}
+            {loading && (
+              <div style={{ padding: 10, color: 'rgba(255,255,255,0.75)' }}>
+                Loading…
+              </div>
+            )}
 
             {!loading && isLoggedIn && items.length === 0 && (
-              <div style={{ padding: 10, color: 'rgba(255,255,255,0.75)' }}>No notifications yet.</div>
+              <div style={{ padding: 10, color: 'rgba(255,255,255,0.75)' }}>
+                No notifications yet.
+              </div>
             )}
 
             {!loading &&
@@ -1032,9 +1064,13 @@ useEffect(() => {
                       width: '100%',
                       borderRadius: 14,
                       border: `1px solid ${
-                        isUnread ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.10)'
+                        isUnread
+                          ? 'rgba(255,255,255,0.18)'
+                          : 'rgba(255,255,255,0.10)'
                       }`,
-                      background: isUnread ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.03)',
+                      background: isUnread
+                        ? 'rgba(255,255,255,0.06)'
+                        : 'rgba(255,255,255,0.03)',
                       padding: '12px 12px',
                       cursor: 'pointer',
                       display: 'grid',
@@ -1049,16 +1085,42 @@ useEffect(() => {
                         alignItems: 'baseline',
                       }}
                     >
-                      <div style={{ fontWeight: 800, color: 'rgba(255,255,255,0.92)' }}>{n.title}</div>
-                      <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)' }}>
+                      <div
+                        style={{
+                          fontWeight: 800,
+                          color: 'rgba(255,255,255,0.92)',
+                        }}
+                      >
+                        {n.title}
+                      </div>
+                      <div
+                        style={{
+                          fontSize: 12,
+                          color: 'rgba(255,255,255,0.55)',
+                        }}
+                      >
                         {formatDate(n.createdAt)}
                       </div>
                     </div>
 
-                    <div style={{ color: 'rgba(255,255,255,0.78)', lineHeight: 1.35 }}>{n.body}</div>
+                    <div
+                      style={{
+                        color: 'rgba(255,255,255,0.78)',
+                        lineHeight: 1.35,
+                      }}
+                    >
+                      {n.body}
+                    </div>
 
                     {isUnread && (
-                      <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)' }}>Unread</div>
+                      <div
+                        style={{
+                          fontSize: 12,
+                          color: 'rgba(255,255,255,0.65)',
+                        }}
+                      >
+                        Unread
+                      </div>
                     )}
                   </button>
                 );
@@ -1077,7 +1139,9 @@ useEffect(() => {
             }}
           >
             <div style={{ color: 'rgba(255,255,255,0.65)', fontSize: 12 }}>
-              {isLoggedIn ? 'Live updates enabled' : 'Login to enable live updates'}
+              {isLoggedIn
+                ? 'Live updates enabled'
+                : 'Login to enable live updates'}
             </div>
 
             <div style={{ display: 'flex', gap: 10 }}>
@@ -1085,7 +1149,9 @@ useEffect(() => {
                 <button
                   type="button"
                   className="fd-btn"
-                  onClick={() => loadInbox({ append: true, cursor: nextCursor })}
+                  onClick={() =>
+                    loadInbox({ append: true, cursor: nextCursor })
+                  }
                   disabled={loading}
                 >
                   Load more
@@ -1093,11 +1159,19 @@ useEffect(() => {
               )}
 
               {isLoggedIn ? (
-                <button type="button" className="fd-btn" onClick={() => setOpen(false)}>
+                <button
+                  type="button"
+                  className="fd-btn"
+                  onClick={() => setOpen(false)}
+                >
                   Close
                 </button>
               ) : (
-                <button type="button" className="fd-btn" onClick={() => router.push('/login')}>
+                <button
+                  type="button"
+                  className="fd-btn"
+                  onClick={() => router.push('/login')}
+                >
                   Login
                 </button>
               )}

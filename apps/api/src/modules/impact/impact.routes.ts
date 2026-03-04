@@ -59,7 +59,21 @@ export async function registerImpactRoutes(app: FastifyInstance, deps: Deps) {
       policyEvalRepo: deps.policyEvalRepo,
     });
 
-    return deps.impactRepo.listInitiatives(principal.orgId);
+    const initiatives = await deps.impactRepo.listInitiatives(principal.orgId);
+
+    const initiativesWithCounts = await Promise.all(
+      initiatives.map(async (i) => {
+        const decisions = await deps.impactRepo.listDecisionsForInitiative(
+          i.id,
+        );
+        return {
+          ...i,
+          linkedDecisionsCount: decisions.length,
+        };
+      }),
+    );
+
+    return initiativesWithCounts;
   });
 
   app.post('/initiatives', { preHandler: [auth] }, async (req) => {
