@@ -2,7 +2,7 @@ package flowdesk.authz_test
 
 import data.flowdesk.authz.allow
 
-test_allow_me_read_viewer {
+test_allow_me_read_viewer if {
   allow with input as {
     "principal": {"userId": "u1", "orgId": "o1", "role": "viewer"},
     "action": "me.read",
@@ -10,7 +10,7 @@ test_allow_me_read_viewer {
   }
 }
 
-test_deny_admin_read_viewer {
+test_deny_admin_read_viewer if {
   not allow with input as {
     "principal": {"userId": "u1", "orgId": "o1", "role": "viewer"},
     "action": "admin.policies.read",
@@ -18,7 +18,7 @@ test_deny_admin_read_viewer {
   }
 }
 
-test_deny_org_mismatch {
+test_deny_org_mismatch if {
   not allow with input as {
     "principal": {"userId": "u1", "orgId": "o1", "role": "admin"},
     "action": "me.read",

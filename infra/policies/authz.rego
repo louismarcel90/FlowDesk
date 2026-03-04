@@ -1,26 +1,26 @@
 package flowdesk.authz_lib
 
 # Public function: allow_for(i) returns true/false
-allow_for(i) {
+allow_for(i) if {
   org_match(i)
   required_rank[i.action]
   role_rank[i.principal.role] >= required_rank[i.action]
 }
 
 # Public function: reason_for(i) returns a string
-reason_for(i) = msg {
+reason_for(i) := msg if {
   not org_match(i)
   msg := "DENY: org mismatch"
-} else = msg {
+} else := msg if {
   not required_rank[i.action]
   msg := sprintf("DENY: unknown action %v", [i.action])
-} else = msg {
+} else := msg if {
   not role_rank[i.principal.role]
   msg := sprintf("DENY: unknown role %v", [i.principal.role])
-} else = msg {
+} else := msg if {
   role_rank[i.principal.role] < required_rank[i.action]
   msg := "DENY: insufficient role"
-} else = msg {
+} else := msg if {
   msg := "ALLOW"
 }
 
@@ -69,10 +69,10 @@ required_rank := {
 }
 
 # ---- Org matching
-org_match(i) {
+org_match(i) if {
   not i.resource.orgId
 }
 
-org_match(i) {
+org_match(i) if {
   i.resource.orgId == i.principal.orgId
 }

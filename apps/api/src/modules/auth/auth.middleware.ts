@@ -4,12 +4,6 @@ import { verifyAccessToken } from './auth.jwt';
 import type { Role } from './auth.types';
 import { RoleRank } from './auth.types';
 
-/**
- * Routes publiques (pas d'auth)
- * - /metrics : scrape Prometheus / healthchecks -> sinon boucle 401
- * - /health, /ready : endpoints ops classiques
- * - /internal/metrics : si tu l'utilises (d'après ton arbre de routes)
- */
 const PUBLIC_PATHS = new Set(['/metrics', '/health', '/ready']);
 
 export type AuthPrincipal = {
@@ -17,8 +11,6 @@ export type AuthPrincipal = {
   userId: string;
   role: Role;
 };
-
-// Ajoute req.principal dans FastifyRequest (runtime: on le set dans authenticate)
 declare module 'fastify' {
   interface FastifyRequest {
     principal: AuthPrincipal;
@@ -26,7 +18,6 @@ declare module 'fastify' {
 }
 
 export function getBearerToken(req: FastifyRequest) {
-  // garde tes logs si tu veux debug; sinon tu peux les retirer
   console.log('AUTH HEADER RAW=', req.headers.authorization);
 
   const h = req.headers.authorization;
@@ -38,19 +29,12 @@ export function getBearerToken(req: FastifyRequest) {
   return token;
 }
 
-/**
- * Middleware d'auth à brancher en hook global (preValidation / onRequest etc.)
- * Exemple:
- *   app.addHook('preValidation', authenticate({ getRole }))
- */
 export function authenticate(deps: {
   getRole: (orgId: string, userId: string) => Promise<Role | null>;
 }) {
   return async function (req: FastifyRequest) {
-    // ✅ Skip preflight
     if (req.method === 'OPTIONS') return;
 
-    // ✅ Skip routes publiques
     const path = (req.url ?? '').split('?')[0];
     if (PUBLIC_PATHS.has(path)) return;
 
@@ -74,11 +58,6 @@ export function authenticate(deps: {
   };
 }
 
-/**
- * Guard de rôle à utiliser au niveau des routes
- * Exemple:
- *   app.get('/admin', { preValidation: requireRole('ADMIN') }, handler)
- */
 export function requireRole(minRole: Role) {
   return async function (req: FastifyRequest) {
     const p = req.principal as AuthPrincipal | undefined;
