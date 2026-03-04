@@ -17,7 +17,7 @@ export async function apiFetch<T = any>(
   const res = await fetch(`${API_URL}${path}`, {
     ...init,
     headers,
-    // credentials: 'omit',
+    credentials: 'omit',
   });
 
   console.log('FETCH URL =', `${API_URL}${path}`);

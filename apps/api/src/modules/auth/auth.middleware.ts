@@ -20,17 +20,17 @@ declare module 'fastify' {
 export function getBearerToken(req: FastifyRequest) {
   // 1) Header Authorization (fetch normal)
   const h = req.headers.authorization;
-  if (typeof h === "string" && h.length > 0) {
-    const [type, token] = h.split(" ");
-    if (type === "Bearer" && token) return token;
+  if (typeof h === 'string' && h.length > 0) {
+    const [type, token] = h.split(' ');
+    if (type === 'Bearer' && token) return token;
   }
 
   // 2) Query token (SSE EventSource)
   const q = (req.query ?? {}) as { access_token?: string; token?: string };
 
   const qt =
-    (typeof q.access_token === "string" && q.access_token) ||
-    (typeof q.token === "string" && q.token) ||
+    (typeof q.access_token === 'string' && q.access_token) ||
+    (typeof q.token === 'string' && q.token) ||
     null;
 
   return qt;
