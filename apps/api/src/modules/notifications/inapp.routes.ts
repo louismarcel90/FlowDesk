@@ -207,18 +207,6 @@ export async function registerInAppNotificationRoutes(
       const userId = String(principal.userId);
       const origin = String(req.headers.origin ?? 'http://localhost:3000');
 
-      app.options('/notifications/stream', async (req, reply) => {
-        const origin = String(req.headers.origin ?? 'http://localhost:3000');
-        reply
-          .header('Access-Control-Allow-Origin', origin)
-          .header('Access-Control-Allow-Credentials', 'true')
-          .header('Access-Control-Allow-Headers', 'Authorization, Content-Type')
-          .header('Access-Control-Allow-Methods', 'GET, OPTIONS')
-          .header('Vary', 'Origin')
-          .code(204)
-          .send();
-      });
-
       reply.raw.writeHead(200, {
         'Content-Type': 'text/event-stream; charset=utf-8',
         'Cache-Control': 'no-cache, no-transform',
@@ -261,4 +249,16 @@ export async function registerInAppNotificationRoutes(
       });
     },
   );
+
+  app.options('/notifications/stream', async (req, reply) => {
+    const origin = String(req.headers.origin ?? 'http://localhost:3000');
+    reply
+      .header('Access-Control-Allow-Origin', origin)
+      .header('Access-Control-Allow-Credentials', 'true')
+      .header('Access-Control-Allow-Headers', 'Authorization, Content-Type')
+      .header('Access-Control-Allow-Methods', 'GET, OPTIONS')
+      .header('Vary', 'Origin')
+      .code(204)
+      .send();
+  });
 }

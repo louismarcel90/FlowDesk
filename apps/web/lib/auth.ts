@@ -1,5 +1,3 @@
-// apps/web/lib/auth.ts
-
 export const ACCESS_KEY = 'flowdesk_access_token';
 export const REFRESH_KEY = 'flowdesk_refresh_token';
 

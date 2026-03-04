@@ -22,13 +22,11 @@ export async function apiFetch<T = any>(
 
   console.log('FETCH URL =', `${API_URL}${path}`);
 
-  // ✅ auto-logout sur 401 (token expiré/invalid)
   if (res.status === 401) {
-    // évite des boucles: si pas de token, ne spam pas clearTokens
-    if (token) clearTokens();
+    const isAuthTruthEndpoint =
+      path.startsWith('/me') || path.startsWith('/auth/refresh');
 
-    // Si l'appel était "non-auth" on laisse l'appelant gérer.
-    // Ici on ne throw pas tout de suite; on laisse la suite parser le body si possible.
+    if (isAuthTruthEndpoint && token) clearTokens();
   }
 
   const json = await res.json().catch(() => null);
@@ -43,6 +41,5 @@ export async function apiFetch<T = any>(
 
     throw new Error(msg);
   }
-
   return json as T;
 }

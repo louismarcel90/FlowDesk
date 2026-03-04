@@ -18,15 +18,22 @@ declare module 'fastify' {
 }
 
 export function getBearerToken(req: FastifyRequest) {
-  console.log('AUTH HEADER RAW=', req.headers.authorization);
-
+  // 1) Header Authorization (fetch normal)
   const h = req.headers.authorization;
-  if (!h) return null;
+  if (typeof h === "string" && h.length > 0) {
+    const [type, token] = h.split(" ");
+    if (type === "Bearer" && token) return token;
+  }
 
-  const [type, token] = h.split(' ');
-  if (type !== 'Bearer' || !token) return null;
+  // 2) Query token (SSE EventSource)
+  const q = (req.query ?? {}) as { access_token?: string; token?: string };
 
-  return token;
+  const qt =
+    (typeof q.access_token === "string" && q.access_token) ||
+    (typeof q.token === "string" && q.token) ||
+    null;
+
+  return qt;
 }
 
 export function authenticate(deps: {
