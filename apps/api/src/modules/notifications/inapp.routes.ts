@@ -214,11 +214,13 @@ export async function registerInAppNotificationRoutes(
         'X-Accel-Buffering': 'no',
         'Access-Control-Allow-Origin': origin,
         'Access-Control-Allow-Credentials': 'true',
+        'Content-Encoding': 'none',
         Vary: 'Origin',
       });
 
       // keep open forever
       req.raw.setTimeout(0);
+      reply.hijack();
       reply.raw.flushHeaders?.();
 
       const write = (event: string, payload: unknown) => {

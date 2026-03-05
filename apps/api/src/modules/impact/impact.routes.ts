@@ -155,7 +155,7 @@ export async function registerImpactRoutes(app: FastifyInstance, deps: Deps) {
   });
 
   app.post<{ Params: { id: string } }>(
-    '/impact/initiatives/:id/links',
+    '/initiatives/:id/links',
     { preHandler: [auth] },
     async (req) => {
       const ctx = req.ctx as RequestContext;

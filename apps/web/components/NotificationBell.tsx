@@ -800,64 +800,96 @@ export default function NotificationBell() {
   }, []);
 
   // Au mount + quand authToken change : refresh unread + SSE si logged in
+  const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+
   useEffect(() => {
-    refreshUnread();
+    // refreshUnread();
+    if (!authToken) return;
 
-    if (!authToken) {
-      // logout: ferme SSE si existant
-      if (sseRef.current) {
-        sseRef.current.close();
-        sseRef.current = null;
+    let closed = false;
+    let es: EventSource | null = null;
+    let retry = 0;
+    let retryTimer: any = null;
+
+    const connect = () => {
+      if (closed) return;
+
+      // reset timer
+      if (retryTimer) {
+        clearTimeout(retryTimer);
+        retryTimer = null;
       }
-      return;
-    }
 
-    // ✅ éviter double-connexion
-    if (sseRef.current) {
-      sseRef.current.close();
-      sseRef.current = null;
-    }
+      const url = `${API_URL}/notifications/stream?access_token=${encodeURIComponent(authToken)}`;
+      es = new EventSource(url);
+      sseRef.current = es;
 
-    const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
-    const url = `${API_URL}/notifications/stream?access_token=${encodeURIComponent(authToken)}`;
-
-    const es = new EventSource(url);
-    sseRef.current = es;
-
-    const onUnread = (e: MessageEvent) => {
-      try {
-        const data = JSON.parse(e.data);
-        if (typeof (data as any)?.unreadCount === 'number') {
-          setUnreadCount((data as any).unreadCount);
-          writeCachedUnread((data as any).unreadCount);
+      const onUnread = (e: MessageEvent) => {
+        try {
+          const data = JSON.parse(e.data);
+          if (typeof (data as any)?.unreadCount === 'number') {
+            setUnreadCount((data as any).unreadCount);
+            writeCachedUnread((data as any).unreadCount);
+          }
+        } catch {
+          // ignore
         }
-      } catch {
-        // ignore
-      }
+      };
+
+      es.addEventListener('unread_count_updated', onUnread as any);
+      es.addEventListener('notifications.unreadCount', onUnread as any);
+
+      // (optionnel) ping -> juste pour debug / keepalive
+      es.addEventListener('ping', () => {});
+
+      es.onopen = () => {
+        retry = 0;
+      };
+
+      es.onerror = () => {
+        // On ferme proprement et on reconnect avec backoff.
+        try {
+          es?.close();
+        } catch {}
+        if (sseRef.current === es) sseRef.current = null;
+
+        if (closed) return;
+
+        // backoff: 1s, 2s, 4s, 8s... max 15s
+        retry += 1;
+        const delay = Math.min(15000, 1000 * Math.pow(2, retry - 1));
+        retryTimer = setTimeout(connect, delay);
+      };
+
+      // cleanup listeners si jamais on reconnect
+      const cleanup = () => {
+        try {
+          es?.removeEventListener('unread_count_updated', onUnread as any);
+          es?.removeEventListener('notifications.unreadCount', onUnread as any);
+          es?.close();
+        } catch {}
+        if (sseRef.current === es) sseRef.current = null;
+      };
+
+      // stocker cleanup sur l'instance (optionnel)
+      (es as any).__cleanup = cleanup;
     };
 
-    // event principal (celui de inapp.routes.ts)
-    es.addEventListener('unread_count_updated', onUnread);
+    connect();
 
-    // safe backward-compat si ancien nom d'event
-    es.addEventListener('notifications.unreadCount', onUnread);
-
-    es.onerror = () => {
-      // EventSource retry automatiquement.
-      // Mais si ton serveur reset souvent, fermer évite les connexions "zombie".
+    return () => {
+      closed = true;
+      if (retryTimer) clearTimeout(retryTimer);
       try {
-        es.close();
+        const current = sseRef.current as any;
+        current?.__cleanup?.();
+      } catch {}
+      try {
+        es?.close();
       } catch {}
       if (sseRef.current === es) sseRef.current = null;
     };
-
-    return () => {
-      es.removeEventListener('unread_count_updated', onUnread as any);
-      es.removeEventListener('notifications.unreadCount', onUnread as any);
-      es.close();
-      if (sseRef.current === es) sseRef.current = null;
-    };
-  }, [authToken]);
+  }, [authToken, API_URL]);
 
   // Quand on ouvre : refresh + charge inbox (la première fois), puis reload quand limit change
   useEffect(() => {
