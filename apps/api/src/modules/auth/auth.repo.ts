@@ -8,7 +8,6 @@ export type DbUser = {
   displayName: string;
 };
 
-// Row "DB-shape" (snake_case)
 export type RefreshRow = {
   id: string;
   org_id: string | null;

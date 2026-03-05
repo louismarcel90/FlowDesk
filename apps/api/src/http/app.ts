@@ -31,12 +31,16 @@ import {
 } from '../modules/notifications/inapp.repo';
 import { buildDlqRepo } from '../modules/ops/dlq.repo';
 import { NotificationsRepo } from '../modules/decisions/decisions.types';
+import type { Role } from '../modules/auth/auth.types';
+
 
 declare module 'fastify' {
   interface FastifyRequest {
     _startAt?: bigint;
   }
 }
+
+import { DbUser } from '../modules/auth/auth.repo';
 
 type AuthRoutesDeps = Parameters<typeof registerAuthRoutes>[1];
 type MeRoutesDeps = Parameters<typeof registerMeRoutes>[1];
@@ -143,14 +147,14 @@ export async function buildApp() {
       return rows[0] ?? null;
     },
 
-    async createUser() {
-      throw new Error('createUser not implemented in buildAuthRepo');
+    async createUser(u: DbUser) {
+      return authRepoBase.createUser(u);
     },
-    async createOrg() {
-      throw new Error('createOrg not implemented in buildAuthRepo');
+    async createOrg(o: { id: string; name: string }) {
+      return authRepoBase.createOrg(o);
     },
-    async addMembership() {
-      throw new Error('addMembership not implemented in buildAuthRepo');
+    async addMembership(m: { id: string; orgId: string; userId: string; role: Role }) {
+      return authRepoBase.addMembership(m);
     },
   });
 
