@@ -103,7 +103,6 @@ jobs:
           echo "OPA not ready"
           docker logs opa || true
           exit 1
-      
 
       - name: Migrate database
         run: pnpm --filter @flowdesk/api run db:migrate
