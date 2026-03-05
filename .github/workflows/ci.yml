@@ -103,6 +103,13 @@ jobs:
           echo "OPA not ready"
           docker logs opa || true
           exit 1
+      
+
+      - name: Migrate database
+        run: pnpm --filter @flowdesk/api run db:migrate
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/flowdesk_test
 
       - name: Test
         run: pnpm run test
