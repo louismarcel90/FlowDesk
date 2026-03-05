@@ -33,7 +33,6 @@ import { buildDlqRepo } from '../modules/ops/dlq.repo';
 import { NotificationsRepo } from '../modules/decisions/decisions.types';
 import type { Role } from '../modules/auth/auth.types';
 
-
 declare module 'fastify' {
   interface FastifyRequest {
     _startAt?: bigint;
@@ -153,7 +152,12 @@ export async function buildApp() {
     async createOrg(o: { id: string; name: string }) {
       return authRepoBase.createOrg(o);
     },
-    async addMembership(m: { id: string; orgId: string; userId: string; role: Role }) {
+    async addMembership(m: {
+      id: string;
+      orgId: string;
+      userId: string;
+      role: Role;
+    }) {
       return authRepoBase.addMembership(m);
     },
   });
