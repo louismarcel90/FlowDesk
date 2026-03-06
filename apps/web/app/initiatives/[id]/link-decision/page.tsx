@@ -22,10 +22,10 @@ export default function LinkDecisionPage() {
   const [success, setSuccess] = useState('');
   const [results, setResults] = useState<Decision[]>([]);
 
-  // const DECISIONS_SEARCH_URL = useMemo(
-  //   () => (query: string) => `/decisions?search=${encodeURIComponent(query)}`,
-  //   []
-  // );
+  const DECISIONS_SEARCH_URL = useMemo(
+    () => (query: string) => `/decisions?search=${encodeURIComponent(query)}`,
+    []
+  );
 
   useEffect(() => {
     setError('');

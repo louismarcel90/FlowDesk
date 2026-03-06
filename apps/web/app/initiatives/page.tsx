@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { apiFetch } from '../../lib/api';
-import { Decision } from '../../../api/src/modules/decisions/decisions.types';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
+
+import { apiFetch } from '../../lib/api';
+import type { Decision } from '../../../api/src/modules/decisions/decisions.types';
 
 type Initiative = {
   id: string;
@@ -12,7 +13,7 @@ type Initiative = {
   linkedDecisionsCount?: number;
   status: string;
   createdAt?: string;
-  decision?: Decision; // (ton modèle actuel montre 1 decision)
+  decision?: Decision | null;
 };
 
 type DecisionSearchItem = Pick<Decision, 'id' | 'title' | 'status'>;
@@ -26,96 +27,19 @@ function formatDate(d?: string) {
 
 export default function InitiativesPage() {
   const [items, setItems] = useState<Initiative[]>([]);
-  const [error, setError] = useState('');
   const [loadingList, setLoadingList] = useState(true);
-
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-
-  const [creating, setCreating] = useState(false);
+  const [error, setError] = useState('');
   const [createdToast, setCreatedToast] = useState<string>('');
-
-  // ---------- NEW: local selected decision for the CREATE form ----------
-  const [selectedDecision, setSelectedDecision] =
-    useState<DecisionSearchItem | null>(null);
-
-  // ---------- NEW: link decision modal state (shared for create + list) ----------
-  const [linkOpen, setLinkOpen] = useState(false);
-  const [linkMode, setLinkMode] = useState<'create' | 'link-existing'>(
-    'create',
-  );
-  const [linkInitiativeId, setLinkInitiativeId] = useState<string | null>(null);
-
-  // modal search state
-  const [decisionQ, setDecisionQ] = useState('');
-  const [decisionResults, setDecisionResults] = useState<DecisionSearchItem[]>(
-    [],
-  );
-  const [decisionLoading, setDecisionLoading] = useState(false);
-  const [decisionError, setDecisionError] = useState('');
-  const [showDecisionPicker, setShowDecisionPicker] = useState(false);
-
-  const DECISIONS_SEARCH_URL = (q: string) =>
-    `/impact/decisions?q=${encodeURIComponent(q)}`;
-
-  useEffect(() => {
-    if (!showDecisionPicker) return;
-
-    const q = decisionQ.trim();
-    if (q.length === 0) {
-      setDecisionResults([]);
-      setDecisionError('');
-      return;
-    }
-
-    const t = window.setTimeout(async () => {
-      setDecisionLoading(true);
-      setDecisionError('');
-      try {
-        // ton backend peut renvoyer { items } ou directement un tableau
-        const res: any = await apiFetch(DECISIONS_SEARCH_URL(q));
-        const items = Array.isArray(res)
-          ? res
-          : Array.isArray(res?.items)
-            ? res.items
-            : [];
-        setDecisionResults(items);
-      } catch (e: any) {
-        setDecisionError(String(e?.message ?? e));
-        setDecisionResults([]);
-      } finally {
-        setDecisionLoading(false);
-      }
-    }, 150); // 150–250ms = bon feeling
-
-    return () => window.clearTimeout(t);
-  }, [decisionQ, showDecisionPicker]);
-
-  function pickDecision(d: DecisionSearchItem) {
-    setSelectedDecision(d);
-    setShowDecisionPicker(false);
-    setDecisionQ('');
-    setDecisionResults([]);
-  }
-
-  function clearDecision() {
-    setSelectedDecision(null);
-    setDecisionQ('');
-    setDecisionResults([]);
-  }
-
-  const canSubmit = useMemo(() => {
-    const n = name.trim();
-    const d = description.trim();
-    return n.length >= 3 && d.length >= 10 && !creating;
-  }, [name, description, creating]);
 
   async function load() {
     setError('');
     setLoadingList(true);
     try {
-      const res = await apiFetch<Initiative[]>('/impact/initiatives');
-      setItems(Array.isArray(res) ? res : []);
+      const res = await apiFetch<Initiative[] | { items: Initiative[] }>(
+        '/impact/initiatives',
+      );
+      const list = Array.isArray(res) ? res : Array.isArray((res as any)?.items) ? (res as any).items : [];
+      setItems(list);
     } catch (e: any) {
       setError(String(e?.message ?? e));
     } finally {
@@ -127,6 +51,37 @@ export default function InitiativesPage() {
     load();
   }, []);
 
+  // --------------------
+  // Create form state
+  // --------------------
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [creating, setCreating] = useState(false);
+
+  // Selected decision for create form
+  const [selectedDecision, setSelectedDecision] = useState<DecisionSearchItem | null>(null);
+
+  // Inline search UI state
+  const [showDecisionPicker, setShowDecisionPicker] = useState(false);
+  const [decisionQ, setDecisionQ] = useState('');
+  const [decisionResults, setDecisionResults] = useState<DecisionSearchItem[]>([]);
+  const [decisionLoading, setDecisionLoading] = useState(false);
+  const [decisionError, setDecisionError] = useState('');
+
+  const canSubmit = useMemo(() => {
+    const n = name.trim();
+    const d = description.trim();
+    return n.length >= 3 && d.length >= 10 && !creating;
+  }, [name, description, creating]);
+
+  function reset() {
+    setError('');
+    setCreatedToast('');
+    setName('');
+    setDescription('');
+    clearDecision();
+  }
+
   async function create() {
     setError('');
     setCreatedToast('');
@@ -137,7 +92,7 @@ export default function InitiativesPage() {
       status: 'active',
     };
 
-    // NEW: include decisionId if selected
+    // include decisionId if selected
     if (selectedDecision?.id) payload.decisionId = selectedDecision.id;
 
     try {
@@ -149,8 +104,10 @@ export default function InitiativesPage() {
 
       setCreatedToast('Initiative created ✅');
       await load();
-
       window.setTimeout(() => setCreatedToast(''), 2500);
+
+      // keep form filled? usually reset:
+      reset();
     } catch (e: any) {
       setError(String(e?.message ?? e));
     } finally {
@@ -158,85 +115,77 @@ export default function InitiativesPage() {
     }
   }
 
-  function reset() {
-    setError('');
-    setCreatedToast('');
-    setName('');
-    setDescription('');
-    setSelectedDecision(null); // NEW
-  }
+  // --------------------
+  // Decision search (debounced, with stale-response guard)
+  // --------------------
+  const DECISIONS_SEARCH_URL = (q: string) =>
+    `/decisions?q=${encodeURIComponent(q)}`;
 
-  // -------------------- NEW: modal open helpers --------------------
-  function openLinkForCreate() {
-    setDecisionError('');
-    setDecisionQ('');
-    setDecisionResults([]);
-    setLinkMode('create');
-    setLinkInitiativeId(null);
-    setLinkOpen(true);
-  }
+  const lastReqIdRef = useRef(0);
 
-  function openLinkForExisting(initiativeId: string) {
-    setDecisionError('');
-    setDecisionQ('');
-    setDecisionResults([]);
-    setLinkMode('link-existing');
-    setLinkInitiativeId(initiativeId);
-    setLinkOpen(true);
-  }
+  useEffect(() => {
+    if (!showDecisionPicker) return;
 
-  // -------------------- NEW: decision search --------------------
-  async function searchDecisions() {
-    setDecisionError('');
-    setDecisionLoading(true);
-    try {
-      const res = await apiFetch<{ items: DecisionSearchItem[] }>(
-        `/impact/decisions?search=${encodeURIComponent(decisionQ.trim())}`,
-      );
-      setDecisionResults(Array.isArray(res?.items) ? res.items : []);
-    } catch (e: any) {
-      setDecisionError(String(e?.message ?? e));
-    } finally {
+    const q = decisionQ.trim();
+    if (!q) {
+      setDecisionResults([]);
+      setDecisionError('');
       setDecisionLoading(false);
-    }
-  }
-
-  // -------------------- NEW: confirm selection from modal --------------------
-  async function confirmLinkDecision(d: DecisionSearchItem) {
-    setDecisionError('');
-
-    // Mode 1: for CREATE form (just set local selection)
-    if (linkMode === 'create') {
-      setSelectedDecision(d);
-      setLinkOpen(false);
       return;
     }
 
-    // Mode 2: link to an existing initiative
-    if (!linkInitiativeId) {
-      setDecisionError('Missing initiative id.');
-      return;
-    }
+    const t = window.setTimeout(async () => {
+      const reqId = ++lastReqIdRef.current;
 
-    try {
       setDecisionLoading(true);
+      setDecisionError('');
 
-      await apiFetch(`/impact/initiatives/${linkInitiativeId}/links`, {
-        method: 'POST',
-        body: JSON.stringify({ decisionId: d.id }),
-      });
+      try {
+        const res = await apiFetch<any>(DECISIONS_SEARCH_URL(q));
 
-      setLinkOpen(false);
-      await load();
-      setCreatedToast('Decision linked ✅');
-      window.setTimeout(() => setCreatedToast(''), 2500);
-    } catch (e: any) {
-      setDecisionError(String(e?.message ?? e));
-    } finally {
-      setDecisionLoading(false);
-    }
+        // accept both shapes: array OR { items }
+        const list: DecisionSearchItem[] = Array.isArray(res)
+          ? res
+          : Array.isArray(res?.items)
+            ? res.items
+            : [];
+
+        // stale response guard
+        if (reqId !== lastReqIdRef.current) return;
+
+        setDecisionResults(list);
+      } catch (e: any) {
+        if (reqId !== lastReqIdRef.current) return;
+        setDecisionError(String(e?.message ?? e));
+        setDecisionResults([]);
+      } finally {
+        if (reqId === lastReqIdRef.current) setDecisionLoading(false);
+      }
+    }, 180);
+
+    return () => window.clearTimeout(t);
+  }, [decisionQ, showDecisionPicker]);
+
+  function pickDecision(d: DecisionSearchItem) {
+    setSelectedDecision(d);
+    setShowDecisionPicker(false);
+    setDecisionQ('');
+    setDecisionResults([]);
+    setDecisionError('');
   }
 
+  function clearDecision() {
+    setSelectedDecision(null);
+    setShowDecisionPicker(false);
+    setDecisionQ('');
+    setDecisionResults([]);
+    setDecisionError('');
+    setDecisionLoading(false);
+  }
+
+  // --------------------
+  // UI
+  // --------------------
   return (
     <main className="fd-page">
       <header className="fd-page-header">
@@ -311,9 +260,7 @@ export default function InitiativesPage() {
                 autoComplete="off"
               />
 
-              <div className="fd-help">
-                Minimum 3 characters. Make it action-oriented.
-              </div>
+              <div className="fd-help">Minimum 3 characters. Make it action-oriented.</div>
             </div>
 
             <div className="fd-field">
@@ -336,26 +283,19 @@ export default function InitiativesPage() {
             <div className="fd-field">
               <label className="fd-label">Status</label>
               <div className="fd-pill fd-pill--success">active</div>
-              <div className="fd-help">
-                You can extend this later with draft/paused/completed.
-              </div>
+              <div className="fd-help">You can extend this later with draft/paused/completed.</div>
             </div>
 
-            {/* ----------- LINKED DECISION (INLINE LIVE SEARCH) ----------- */}
+            {/* ---------------- LINKED DECISION (INLINE LIVE SEARCH) ---------------- */}
             <div className="fd-field">
-              {/* Label replaced by selected decision title */}
               <label className="fd-label">
                 {selectedDecision
-                  ? (selectedDecision.title ?? selectedDecision.id)
+                  ? selectedDecision.title ?? selectedDecision.id
                   : 'Linked decision'}
               </label>
 
-              {/* If selected => show chip + actions */}
               {selectedDecision ? (
-                <div
-                  className="fd-row"
-                  style={{ gap: 10, alignItems: 'center' }}
-                >
+                <div className="fd-row" style={{ gap: 10, alignItems: 'center' }}>
                   <span className="fd-chip">
                     {selectedDecision.title ?? selectedDecision.id}
                   </span>
@@ -363,13 +303,7 @@ export default function InitiativesPage() {
                   <button
                     className="fd-btn"
                     type="button"
-                    onClick={() => {
-                      // clearDecision()
-                      setSelectedDecision(null);
-                      setShowDecisionPicker(false);
-                      setDecisionQ('');
-                      setDecisionResults([]);
-                    }}
+                    onClick={clearDecision}
                     disabled={creating}
                     title="Remove linked decision"
                   >
@@ -380,8 +314,11 @@ export default function InitiativesPage() {
                     className="fd-btn"
                     type="button"
                     onClick={() => {
+                      setDecisionError('');
+                      setDecisionResults([]);
                       setShowDecisionPicker(true);
-                      // optional: focus is handled by autoFocus on input below
+                      // keep existing query blank so user types fresh
+                      setDecisionQ('');
                     }}
                     disabled={creating}
                     title="Change decision"
@@ -390,106 +327,84 @@ export default function InitiativesPage() {
                   </button>
                 </div>
               ) : (
-                <>
-                  <div
-                    className="fd-row"
-                    style={{ gap: 10, alignItems: 'center' }}
-                  >
-                    <div className="fd-help" style={{ margin: 0 }}>
-                      No decision linked yet.
-                    </div>
-
-                    <button
-                      className="fd-btn"
-                      type="button"
-                      onClick={() => {
-                        setShowDecisionPicker((v) => !v);
-                        setDecisionError('');
-                        setDecisionResults([]);
-                        // keep decisionQ as-is or reset:
-                        // setDecisionQ('');
-                      }}
-                      disabled={creating}
-                    >
-                      Link Decision
-                    </button>
+                <div className="fd-row" style={{ gap: 10, alignItems: 'center' }}>
+                  <div className="fd-help" style={{ margin: 0 }}>
+                    No decision linked yet.
                   </div>
 
-                  {/* Inline search panel */}
-                  {showDecisionPicker && (
-                    <div
-                      className="fd-stack"
-                      style={{ gap: 10, marginTop: 10 }}
-                    >
-                      {decisionError && (
-                        <div className="fd-alert fd-alert--danger">
-                          {decisionError}
-                        </div>
-                      )}
+                  <button
+                    className="fd-btn"
+                    type="button"
+                    onClick={() => {
+                      setShowDecisionPicker((v) => !v);
+                      setDecisionError('');
+                      setDecisionResults([]);
+                      // reset query for a clean search experience
+                      setDecisionQ('');
+                    }}
+                    disabled={creating}
+                  >
+                    Link Decision
+                  </button>
+                </div>
+              )}
 
-                      <input
-                        className="fd-input"
-                        value={decisionQ}
-                        onChange={(e) => setDecisionQ(e.target.value)}
-                        placeholder="Search decisions…"
-                        autoFocus
-                      />
+              {showDecisionPicker && (
+                <>
+                  <div className="fd-stack" style={{ gap: 10, marginTop: 10 }}>
+                    {decisionError && (
+                      <div className="fd-alert fd-alert--danger">{decisionError}</div>
+                    )}
 
-                      <div className="fd-help" style={{ marginTop: 0 }}>
-                        Type to search — results update as you type.
-                      </div>
+                    <input
+                      className="fd-input"
+                      value={decisionQ}
+                      onChange={(e) => setDecisionQ(e.target.value)}
+                      placeholder="Search decisions…"
+                      autoFocus
+                    />
 
-                      <div className="fd-divider" />
-
-                      {decisionLoading ? (
-                        <div className="fd-muted">Searching…</div>
-                      ) : decisionQ.trim().length === 0 ? (
-                        <div className="fd-muted">
-                          Start typing to see matches.
-                        </div>
-                      ) : decisionResults.length === 0 ? (
-                        <div className="fd-muted">No matches.</div>
-                      ) : (
-                        <div className="fd-stack" style={{ gap: 8 }}>
-                          {decisionResults.map((d) => (
-                            <button
-                              key={d.id}
-                              type="button"
-                              className="fd-result-row"
-                              style={{ textAlign: 'left', cursor: 'pointer' }}
-                              onClick={() => {
-                                // pickDecision(d)
-                                setSelectedDecision(d);
-                                setShowDecisionPicker(false);
-                                setDecisionQ('');
-                                setDecisionResults([]);
-                              }}
-                            >
-                              <div className="fd-result-main">
-                                <div className="fd-result-title">
-                                  {d.title ?? d.id}
-                                </div>
-                                <div className="fd-result-sub">
-                                  <span className="fd-chip">{d.id}</span>
-                                  {d.status ? (
-                                    <span
-                                      className="fd-meta"
-                                      style={{ marginLeft: 8 }}
-                                    >
-                                      {d.status}
-                                    </span>
-                                  ) : null}
-                                </div>
-                              </div>
-                            </button>
-                          ))}
-                        </div>
-                      )}
+                    <div className="fd-help" style={{ marginTop: 0 }}>
+                      Type to search — results update as you type.
                     </div>
-                  )}
 
-                  <div className="fd-help" style={{ marginTop: 10 }}>
-                    Optional — link now, or later from the initiatives list.
+                    <div className="fd-divider" />
+
+                    {decisionLoading ? (
+                      <div className="fd-muted">Searching…</div>
+                    ) : decisionQ.trim().length === 0 ? (
+                      <div className="fd-muted">Start typing to see matches.</div>
+                    ) : decisionResults.length === 0 ? (
+                      <div className="fd-muted">No matches.</div>
+                    ) : (
+                      <div className="fd-stack" style={{ gap: 8 }}>
+                        {decisionResults.map((d) => (
+                          <button
+                            key={d.id}
+                            type="button"
+                            className="fd-result-row"
+                            style={{ textAlign: 'left', cursor: 'pointer' }}
+                            onClick={() => pickDecision(d)}
+                          >
+                            <div className="fd-result-main">
+                              <div className="fd-result-title">{d.title ?? d.id}</div>
+                              <div className="fd-result-sub">
+                                <span className="fd-chip">{d.id}</span>
+                                {d.status ? (
+                                  <span className="fd-meta" style={{ marginLeft: 8 }}>
+                                    {d.status}
+                                  </span>
+                                ) : null}
+                              </div>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="fd-help" style={{ marginTop: 10 }}>
+                      Optional — link now, or later from the initiatives list.
+                    </div>
                   </div>
                 </>
               )}
@@ -518,10 +433,7 @@ export default function InitiativesPage() {
                 <li key={i.id ?? i.name} className="fd-list-item">
                   <div className="fd-list-main">
                     {i.id ? (
-                      <Link
-                        className="fd-item-title"
-                        href={`/initiatives/${i.id}`}
-                      >
+                      <Link className="fd-item-title" href={`/initiatives/${i.id}`}>
                         {i.name}
                       </Link>
                     ) : (
@@ -543,17 +455,15 @@ export default function InitiativesPage() {
                             ? `${i.linkedDecisionsCount} decision${
                                 (i.linkedDecisionsCount ?? 0) > 1 ? 's' : ''
                               } linked`
-                            : 'no decision linked'}{' '}
+                            : 'no decision linked'}
                         </span>
                       </div>
 
-                      {i.createdAt && (
+                      {i.createdAt ? (
                         <div>
-                          <span className="fd-meta">
-                            Created {formatDate(i.createdAt)}
-                          </span>
+                          <span className="fd-meta">Created {formatDate(i.createdAt)}</span>
                         </div>
-                      )}
+                      ) : null}
                     </div>
                   </div>
 
@@ -561,10 +471,7 @@ export default function InitiativesPage() {
                     className="fd-list-side"
                     style={{ display: 'flex', gap: 10, alignItems: 'center' }}
                   >
-                    <Link
-                      className="fd-pill"
-                      href={`/initiatives/${i.id}/link-decision`}
-                    >
+                    <Link className="fd-pill" href={`/initiatives/${i.id}/link-decision`}>
                       Link decision
                     </Link>
 

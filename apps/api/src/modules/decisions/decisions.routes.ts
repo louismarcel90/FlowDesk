@@ -129,7 +129,24 @@ export async function registerDecisionRoutes(app: FastifyInstance, deps: Deps) {
         policyEvalRepo: deps.policyEvalRepo,
       });
 
-      return deps.decisionsRepo.listDecisions(principal.orgId);
+      // return deps.decisionsRepo.listDecisions(principal.orgId);
+
+          const decisions = await deps.decisionsRepo.listDecisions(principal.orgId);
+
+    // Support search: /decisions?q=...
+    const qRaw = (req as { query?: { q?: unknown } }).query?.q;
+    const q = typeof qRaw === 'string' ? qRaw.trim() : '';
+
+    if (!q) return decisions;
+
+    const qLower = q.toLowerCase();
+
+    // Filter by title (and also allow matching id)
+    return decisions.filter((d) => {
+      const title = String((d as { title?: unknown }).title ?? '').toLowerCase();
+      const id = String((d as { id?: unknown }).id ?? '');
+      return title.includes(qLower) || id.includes(q);
+    });
     },
   );
 
