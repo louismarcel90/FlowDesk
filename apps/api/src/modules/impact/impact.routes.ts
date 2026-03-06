@@ -102,6 +102,16 @@ export async function registerImpactRoutes(app: FastifyInstance, deps: Deps) {
       createdBy: principal.userId,
     });
 
+    if (body.decisionId) {
+      await deps.impactRepo.linkDecision({
+        id: randomUUID(),
+        orgId: principal.orgId,
+        decisionId: body.decisionId,
+        initiativeId: id,
+        createdBy: principal.userId,
+      });
+    }
+
     await deps.audit.log(ctx, {
       actorUserId: principal.userId,
       action: 'INITIATIVE_CREATED',
@@ -149,7 +159,7 @@ export async function registerImpactRoutes(app: FastifyInstance, deps: Deps) {
     },
   );
 
-  // Link initiative -> decision
+  // Link from initiative -> decision
   const LinkInitiativeDecisionSchema = z.object({
     decisionId: z.string().uuid(),
   });

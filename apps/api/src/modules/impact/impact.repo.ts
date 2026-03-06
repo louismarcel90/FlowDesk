@@ -10,6 +10,12 @@ export type Initiative = {
   status: InitiativeStatus;
   createdBy: string;
   createdAt: string;
+  decisions?: {
+    id: string;
+    decisionId: string;
+    decisionTitle: string;
+    createdAt: string;
+  }[];
 };
 
 type DbInitiativeRow = {
@@ -151,6 +157,8 @@ export function buildImpactRepo(sql: Sql) {
       const r = rows[0];
       if (!r) return null;
 
+      const decisions = await this.listLinksForInitiative(r.id);
+
       return {
         id: r.id,
         orgId: r.org_id,
@@ -159,6 +167,7 @@ export function buildImpactRepo(sql: Sql) {
         status: r.status as InitiativeStatus,
         createdBy: r.createdBy,
         createdAt: toIsoOrNull(r.createdAt) ?? '',
+        decisions,
       };
     },
 
@@ -292,6 +301,41 @@ export function buildImpactRepo(sql: Sql) {
         initiativeId: r.initiative_id,
         initiativeName: r.initiative_name,
         createdAt: toIsoOrNull(r.createdAt) ?? '',
+      }));
+    },
+
+    async listLinksForInitiative(initiativeId: string): Promise<
+      {
+        id: string;
+        decisionId: string;
+        decisionTitle: string;
+        createdAt: string;
+      }[]
+    > {
+      const rows = await sql<
+        {
+          id: string;
+          decision_id: string;
+          decision_title: string;
+          created_at: Date | string | null;
+        }[]
+      >`
+    select
+      l.id,
+      l.decision_id,
+      d.title as decision_title,
+      l.created_at
+    from decision_links l
+    join decisions d on d.id = l.decision_id
+    where l.initiative_id = ${initiativeId}
+    order by l.created_at desc
+  `;
+
+      return rows.map((r) => ({
+        id: r.id,
+        decisionId: r.decision_id,
+        decisionTitle: r.decision_title,
+        createdAt: toIsoOrNull(r.created_at) ?? '',
       }));
     },
 

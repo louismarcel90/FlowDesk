@@ -2,8 +2,9 @@ import { z } from 'zod';
 
 export const CreateInitiativeSchema = z.object({
   name: z.string().min(3),
-  description: z.string().min(3),
+  description: z.string().min(10),
   status: z.enum(['planned', 'active', 'done']).default('planned'),
+  decisionId: z.string().optional(),
 });
 
 export const CreateMetricSchema = z.object({
