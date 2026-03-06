@@ -24,7 +24,7 @@ export default function LinkDecisionPage() {
 
   const DECISIONS_SEARCH_URL = useMemo(
     () => (query: string) => `/decisions?search=${encodeURIComponent(query)}`,
-    []
+    [],
   );
 
   useEffect(() => {

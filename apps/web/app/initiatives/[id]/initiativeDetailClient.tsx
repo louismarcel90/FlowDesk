@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
-import { apiFetch } from '../../../lib/api'; 
+import { apiFetch } from '../../../lib/api';
 import Link from 'next/link';
 
 type Props = { id: string };

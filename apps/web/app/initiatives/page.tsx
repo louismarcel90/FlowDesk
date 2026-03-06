@@ -38,7 +38,11 @@ export default function InitiativesPage() {
       const res = await apiFetch<Initiative[] | { items: Initiative[] }>(
         '/impact/initiatives',
       );
-      const list = Array.isArray(res) ? res : Array.isArray((res as any)?.items) ? (res as any).items : [];
+      const list = Array.isArray(res)
+        ? res
+        : Array.isArray((res as any)?.items)
+          ? (res as any).items
+          : [];
       setItems(list);
     } catch (e: any) {
       setError(String(e?.message ?? e));
@@ -59,12 +63,15 @@ export default function InitiativesPage() {
   const [creating, setCreating] = useState(false);
 
   // Selected decision for create form
-  const [selectedDecision, setSelectedDecision] = useState<DecisionSearchItem | null>(null);
+  const [selectedDecision, setSelectedDecision] =
+    useState<DecisionSearchItem | null>(null);
 
   // Inline search UI state
   const [showDecisionPicker, setShowDecisionPicker] = useState(false);
   const [decisionQ, setDecisionQ] = useState('');
-  const [decisionResults, setDecisionResults] = useState<DecisionSearchItem[]>([]);
+  const [decisionResults, setDecisionResults] = useState<DecisionSearchItem[]>(
+    [],
+  );
   const [decisionLoading, setDecisionLoading] = useState(false);
   const [decisionError, setDecisionError] = useState('');
 
@@ -260,7 +267,9 @@ export default function InitiativesPage() {
                 autoComplete="off"
               />
 
-              <div className="fd-help">Minimum 3 characters. Make it action-oriented.</div>
+              <div className="fd-help">
+                Minimum 3 characters. Make it action-oriented.
+              </div>
             </div>
 
             <div className="fd-field">
@@ -283,19 +292,24 @@ export default function InitiativesPage() {
             <div className="fd-field">
               <label className="fd-label">Status</label>
               <div className="fd-pill fd-pill--success">active</div>
-              <div className="fd-help">You can extend this later with draft/paused/completed.</div>
+              <div className="fd-help">
+                You can extend this later with draft/paused/completed.
+              </div>
             </div>
 
             {/* ---------------- LINKED DECISION (INLINE LIVE SEARCH) ---------------- */}
             <div className="fd-field">
               <label className="fd-label">
                 {selectedDecision
-                  ? selectedDecision.title ?? selectedDecision.id
+                  ? (selectedDecision.title ?? selectedDecision.id)
                   : 'Linked decision'}
               </label>
 
               {selectedDecision ? (
-                <div className="fd-row" style={{ gap: 10, alignItems: 'center' }}>
+                <div
+                  className="fd-row"
+                  style={{ gap: 10, alignItems: 'center' }}
+                >
                   <span className="fd-chip">
                     {selectedDecision.title ?? selectedDecision.id}
                   </span>
@@ -327,7 +341,10 @@ export default function InitiativesPage() {
                   </button>
                 </div>
               ) : (
-                <div className="fd-row" style={{ gap: 10, alignItems: 'center' }}>
+                <div
+                  className="fd-row"
+                  style={{ gap: 10, alignItems: 'center' }}
+                >
                   <div className="fd-help" style={{ margin: 0 }}>
                     No decision linked yet.
                   </div>
@@ -353,7 +370,9 @@ export default function InitiativesPage() {
                 <>
                   <div className="fd-stack" style={{ gap: 10, marginTop: 10 }}>
                     {decisionError && (
-                      <div className="fd-alert fd-alert--danger">{decisionError}</div>
+                      <div className="fd-alert fd-alert--danger">
+                        {decisionError}
+                      </div>
                     )}
 
                     <input
@@ -373,7 +392,9 @@ export default function InitiativesPage() {
                     {decisionLoading ? (
                       <div className="fd-muted">Searching…</div>
                     ) : decisionQ.trim().length === 0 ? (
-                      <div className="fd-muted">Start typing to see matches.</div>
+                      <div className="fd-muted">
+                        Start typing to see matches.
+                      </div>
                     ) : decisionResults.length === 0 ? (
                       <div className="fd-muted">No matches.</div>
                     ) : (
@@ -387,11 +408,16 @@ export default function InitiativesPage() {
                             onClick={() => pickDecision(d)}
                           >
                             <div className="fd-result-main">
-                              <div className="fd-result-title">{d.title ?? d.id}</div>
+                              <div className="fd-result-title">
+                                {d.title ?? d.id}
+                              </div>
                               <div className="fd-result-sub">
                                 <span className="fd-chip">{d.id}</span>
                                 {d.status ? (
-                                  <span className="fd-meta" style={{ marginLeft: 8 }}>
+                                  <span
+                                    className="fd-meta"
+                                    style={{ marginLeft: 8 }}
+                                  >
                                     {d.status}
                                   </span>
                                 ) : null}
@@ -433,7 +459,10 @@ export default function InitiativesPage() {
                 <li key={i.id ?? i.name} className="fd-list-item">
                   <div className="fd-list-main">
                     {i.id ? (
-                      <Link className="fd-item-title" href={`/initiatives/${i.id}`}>
+                      <Link
+                        className="fd-item-title"
+                        href={`/initiatives/${i.id}`}
+                      >
                         {i.name}
                       </Link>
                     ) : (
@@ -461,7 +490,9 @@ export default function InitiativesPage() {
 
                       {i.createdAt ? (
                         <div>
-                          <span className="fd-meta">Created {formatDate(i.createdAt)}</span>
+                          <span className="fd-meta">
+                            Created {formatDate(i.createdAt)}
+                          </span>
                         </div>
                       ) : null}
                     </div>
@@ -471,7 +502,10 @@ export default function InitiativesPage() {
                     className="fd-list-side"
                     style={{ display: 'flex', gap: 10, alignItems: 'center' }}
                   >
-                    <Link className="fd-pill" href={`/initiatives/${i.id}/link-decision`}>
+                    <Link
+                      className="fd-pill"
+                      href={`/initiatives/${i.id}/link-decision`}
+                    >
                       Link decision
                     </Link>
 
