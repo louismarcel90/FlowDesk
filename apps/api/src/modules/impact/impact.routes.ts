@@ -8,6 +8,7 @@ import { buildImpactRepo } from './impact.repo';
 import { buildAuditService } from '../audit/audit.service';
 import {
   CreateInitiativeSchema,
+  UpdateInitiativeStatusSchema,
   CreateMetricSchema,
   CreateMetricSnapshotSchema,
   LinkDecisionSchema,
@@ -228,6 +229,43 @@ export async function registerImpactRoutes(app: FastifyInstance, deps: Deps) {
       return { ok: true };
     },
   );
+
+  // Update Initiaitive status
+  app.patch('/initiatives/:id/status', { preHandler: [auth] }, async (req) => {
+    const ctx = req.ctx as RequestContext;
+    const principal = req.principal;
+
+    if (!principal) {
+      throw new AppError('UNAUTHORIZED', 'Not authenticated', 401);
+    }
+
+    const params = req.params as { id: string };
+    const body = UpdateInitiativeStatusSchema.parse(req.body);
+
+    await authorize({
+      ctx,
+      principal,
+      action: 'initiative.update',
+      resource: { type: 'initiative', id: params.id, orgId: principal.orgId },
+      policyEvalRepo: deps.policyEvalRepo,
+    });
+
+    await deps.impactRepo.updateInitiativeStatus({
+      id: params.id,
+      orgId: principal.orgId,
+      status: body.status,
+    });
+
+    await deps.audit.log(ctx, {
+      actorUserId: principal.userId,
+      action: 'INITIATIVE_STATUS_UPDATED',
+      entityType: 'initiative',
+      entityId: params.id,
+      payload: { status: body.status },
+    });
+
+    return { ok: true };
+  });
 
   // METRICS
   app.get('/metrics', { preHandler: [auth] }, async (req) => {

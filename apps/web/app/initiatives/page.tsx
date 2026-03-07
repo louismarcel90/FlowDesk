@@ -6,12 +6,26 @@ import Link from 'next/link';
 import { apiFetch } from '../../lib/api';
 import type { Decision } from '../../../api/src/modules/decisions/decisions.types';
 
+type InitiativeStatus = 'planned' | 'active' | 'done';
+
+const ALL_INITIATIVE_STATUSES: InitiativeStatus[] = [
+  'planned',
+  'active',
+  'done',
+];
+
+const STATUS_LABEL: Record<InitiativeStatus, string> = {
+  planned: 'planned',
+  active: 'active',
+  done: 'done',
+};
+
 type Initiative = {
   id: string;
   name: string;
   description?: string | null;
   linkedDecisionsCount?: number;
-  status: string;
+  status: InitiativeStatus;
   createdAt?: string;
   decision?: Decision | null;
 };
@@ -30,6 +44,8 @@ export default function InitiativesPage() {
   const [loadingList, setLoadingList] = useState(true);
   const [error, setError] = useState('');
   const [createdToast, setCreatedToast] = useState<string>('');
+  const [openStatusId, setOpenStatusId] = useState<string | null>(null);
+  const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null);
 
   async function load() {
     setError('');
@@ -54,6 +70,35 @@ export default function InitiativesPage() {
   useEffect(() => {
     load();
   }, []);
+
+  async function changeInitiativeStatus(id: string, status: InitiativeStatus) {
+    setError('');
+    setUpdatingStatusId(id);
+
+    try {
+      await apiFetch(`/impact/initiatives/${id}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status }),
+      });
+
+      setItems((prev) =>
+        prev.map((item) =>
+          item.id === id
+            ? {
+                ...item,
+                status,
+              }
+            : item,
+        ),
+      );
+
+      setOpenStatusId(null);
+    } catch (e: any) {
+      setError(String(e?.message ?? e));
+    } finally {
+      setUpdatingStatusId(null);
+    }
+  }
 
   // --------------------
   // Create form state
@@ -96,7 +141,6 @@ export default function InitiativesPage() {
     const payload: any = {
       name: name.trim(),
       description: description.trim(),
-      status: 'active',
     };
 
     // include decisionId if selected
@@ -291,7 +335,7 @@ export default function InitiativesPage() {
 
             <div className="fd-field">
               <label className="fd-label">Status</label>
-              <div className="fd-pill fd-pill--success">active</div>
+              <div className="fd-pill fd-pill-neutral">Planned</div>
               <div className="fd-help">
                 You can extend this later with draft/paused/completed.
               </div>
@@ -509,7 +553,53 @@ export default function InitiativesPage() {
                       Link decision
                     </Link>
 
-                    <span className="fd-pill fd-pill--success">{i.status}</span>
+                    {/* <span className="fd-pill fd-pill--success">{i.status}</span> */}
+                    <div style={{ position: 'relative' }}>
+                      <button
+                        type="button"
+                        className={`fd-pill ${
+                          i.status === 'planned'
+                            ? 'fd-pill--neutral'
+                            : i.status === 'active'
+                              ? 'fd-pill--success'
+                              : 'fd-pill--done'
+                        }`}
+                        onClick={() =>
+                          setOpenStatusId((current) =>
+                            current === i.id ? null : (i.id ?? null),
+                          )
+                        }
+                        disabled={updatingStatusId === i.id}
+                        style={{
+                          border: 'none',
+                          cursor:
+                            updatingStatusId === i.id ? 'default' : 'pointer',
+                        }}
+                      >
+                        {updatingStatusId === i.id
+                          ? 'updating...'
+                          : STATUS_LABEL[i.status as InitiativeStatus]}
+                      </button>
+
+                      {openStatusId === i.id ? (
+                        <div className="fd-status-menu">
+                          {ALL_INITIATIVE_STATUSES.filter(
+                            (s) => s !== i.status,
+                          ).map((status) => (
+                            <button
+                              key={status}
+                              type="button"
+                              className="fd-status-option"
+                              onClick={() =>
+                                changeInitiativeStatus(i.id!, status)
+                              }
+                            >
+                              {STATUS_LABEL[status]}
+                            </button>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
                   </div>
                 </li>
               ))}

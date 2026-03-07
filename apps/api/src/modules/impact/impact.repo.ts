@@ -1,6 +1,6 @@
 import type { Sql } from '../../db/client';
 
-export type InitiativeStatus = 'draft' | 'active' | 'archived';
+export type InitiativeStatus = 'planned' | 'active' | 'done';
 
 export type Initiative = {
   id: string;
@@ -169,6 +169,19 @@ export function buildImpactRepo(sql: Sql) {
         createdAt: toIsoOrNull(r.createdAt) ?? '',
         decisions,
       };
+    },
+
+    async updateInitiativeStatus(p: {
+      id: string;
+      orgId: string;
+      status: 'planned' | 'active' | 'done';
+    }) {
+      await sql`
+    update initiatives
+    set status = ${p.status}
+    where id = ${p.id}
+      and org_id = ${p.orgId}
+  `;
     },
 
     async createMetric(p: {

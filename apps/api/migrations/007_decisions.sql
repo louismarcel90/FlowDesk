@@ -2,7 +2,7 @@ create table if not exists decisions (
   id text primary key,
   org_id text not null references orgs(id) on delete cascade,
   title text not null,
-  status text not null, -- draft | approved | deprecated
+  status text not null, 
   created_by text not null references users(id) on delete restrict,
   approved_by text null references users(id) on delete restrict,
   created_at timestamptz not null default now(),
