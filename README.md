@@ -1,7 +1,5 @@
 # FlowDesk — _Decision Intelligence & Governance Platform_
 
-
-
 ## 🧰 Technologies Used in Practice
 
 <p align="left">
