@@ -1,0 +1,24 @@
+# dependencies
+node_modules/
+
+# Next.js
+.next/
+**/.next/
+out/
+
+# Turbo
+.turbo/
+**/.turbo/
+
+# build outputs
+dist/
+**/dist/
+
+# logs
+*.log
+
+# env files (ne jamais commit)
+.env
+.env.*
+!.env.example
+
