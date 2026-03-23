@@ -12,6 +12,7 @@ import {
   CreateMetricSchema,
   CreateMetricSnapshotSchema,
   LinkDecisionSchema,
+  LinkDecisionToMetricSchema,
 } from './impact.schemas';
 import { registerMeRoutes } from '../auth/me.routes';
 import { registerAuthRoutes } from '../auth/auth.routes';
@@ -315,6 +316,7 @@ export async function registerImpactRoutes(app: FastifyInstance, deps: Deps) {
       orgId: principal.orgId,
       initiativeId: body.initiativeId,
       name: body.name,
+      // description: body.description,
       unit: body.unit,
       direction: body.direction,
       createdBy: principal.userId,
@@ -330,6 +332,54 @@ export async function registerImpactRoutes(app: FastifyInstance, deps: Deps) {
 
     return { id };
   });
+
+  app.get<{ Params: { id: string } }>(
+    '/metrics/:id',
+    { preHandler: [auth] },
+    async (req) => {
+      const ctx = req.ctx as RequestContext;
+      const principal = req.principal!;
+      const { id } = req.params;
+
+      if (!principal) {
+        throw new AppError('UNAUTHORIZED', 'Not authenticated', 401);
+      }
+
+      await authorize({
+        ctx,
+        principal,
+        action: 'metric.read',
+        resource: { type: 'metric', id, orgId: principal.orgId },
+        policyEvalRepo: deps.policyEvalRepo,
+      });
+
+      return deps.impactRepo.getMetricById(principal.orgId, id);
+    },
+  );
+
+  app.get<{ Params: { id: string } }>(
+    '/metrics/:id/snapshots',
+    { preHandler: [auth] },
+    async (req) => {
+      const ctx = req.ctx as RequestContext;
+      const principal = req.principal!;
+      const { id } = req.params;
+
+      if (!principal) {
+        throw new AppError('UNAUTHORIZED', 'Not authenticated', 401);
+      }
+
+      await authorize({
+        ctx,
+        principal,
+        action: 'metric.read',
+        resource: { type: 'metric', id, orgId: principal.orgId },
+        policyEvalRepo: deps.policyEvalRepo,
+      });
+
+      return deps.impactRepo.getLatestSnapshots(id, 30);
+    },
+  );
 
   app.post<{ Params: { id: string } }>(
     '/metrics/:id/snapshots',
@@ -411,6 +461,47 @@ export async function registerImpactRoutes(app: FastifyInstance, deps: Deps) {
         entityType: 'decision',
         entityId: decisionId,
         payload: { initiativeId: body.initiativeId },
+      });
+
+      return { ok: true };
+    },
+  );
+
+  app.post<{ Params: { id: string } }>(
+    '/decisions/:id/metric-links',
+    { preHandler: [auth] },
+    async (req) => {
+      const ctx = req.ctx as RequestContext;
+      const principal = req.principal!;
+      const { id: decisionId } = req.params;
+      const body = LinkDecisionToMetricSchema.parse(req.body);
+
+      if (!principal) {
+        throw new AppError('UNAUTHORIZED', 'Not authenticated', 401);
+      }
+
+      await authorize({
+        ctx,
+        principal,
+        action: 'decision.link',
+        resource: { type: 'decision', id: decisionId, orgId: principal.orgId },
+        policyEvalRepo: deps.policyEvalRepo,
+      });
+
+      await deps.impactRepo.linkDecisionToMetric({
+        id: randomUUID(),
+        orgId: principal.orgId,
+        decisionId,
+        metricId: body.metricId,
+        createdBy: principal.userId,
+      });
+
+      await deps.audit.log(ctx, {
+        actorUserId: principal.userId,
+        action: 'DECISION_METRIC_LINKED',
+        entityType: 'decision',
+        entityId: decisionId,
+        payload: { metricId: body.metricId },
       });
 
       return { ok: true };

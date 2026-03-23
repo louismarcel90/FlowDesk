@@ -81,7 +81,6 @@ export type Decision = {
   orgId: string;
   title: string;
   status: DecisionStatus;
-
   createdBy: string;
   createdAt: Date;
 

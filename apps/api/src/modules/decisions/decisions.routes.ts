@@ -24,8 +24,25 @@ import type {
 import { SSEHub } from '../notifications/sseHub';
 import { NOTIF_TYPES } from './decisions.types';
 
+export type DecisionMetricLinkItem = {
+  id: string;
+  metricId: string;
+  metricName: string;
+  metricUnit: string;
+  metricDirection: string;
+  linkedAt: string;
+  latestSnapshot: {
+    id: string;
+    value: number;
+    occurredAt: string;
+    source: string;
+    createdAt: string;
+  } | null;
+};
+
 export type ImpactRepo = {
   listLinksForDecision(decisionId: string): Promise<unknown[]>;
+  listMetricsForDecision(decisionId: string): Promise<DecisionMetricLinkItem[]>;
 };
 
 export type AuthRepo = {
@@ -252,8 +269,9 @@ export async function registerDecisionRoutes(app: FastifyInstance, deps: Deps) {
       const versions = await deps.decisionsRepo.getVersions(id);
       const comments = await deps.decisionsRepo.getComments(id);
       const links = await deps.impactRepo.listLinksForDecision(id);
+      const linkedMetrics = await deps.impactRepo.listMetricsForDecision(id);
 
-      return { decision, versions, comments, links };
+      return { decision, versions, comments, links, linkedMetrics };
     },
   );
 

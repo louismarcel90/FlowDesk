@@ -1,3 +1,4 @@
+import { AppError } from '../../core/errors';
 import type { Sql } from '../../db/client';
 
 export type InitiativeStatus = 'planned' | 'active' | 'done';
@@ -34,12 +35,23 @@ type DbMetricRow = {
   name: string;
   unit: string;
   direction: string;
+  // description: string | null;
+  createdAt: string;
+  createdBy: string;
+};
+
+type DbMetricDetailRow = {
+  id: string;
+  name: string;
+  // description: string | null;
+  unit: string;
+  direction: string;
   createdAt: string;
 };
 
 type DbMetricSnapshotRow = {
   id: string;
-  occurred_at: string;
+  occurredAt: string;
   value: number;
   source: string;
   createdAt: string;
@@ -62,6 +74,14 @@ export type MetricSnapshot = {
   createdAt: string;
 };
 
+export type MetricDecisionLinkItem = {
+  id: string;
+  decisionId: string;
+  decisionTitle: string;
+  decisionStatus: string;
+  createdAt: string;
+};
+
 type DbDecisionLinkRow = {
   id: string;
   initiative_id: string;
@@ -81,6 +101,22 @@ export type DecisionLinkItem = {
   initiativeId: string;
   initiativeName: string;
   createdAt: string;
+};
+
+export type DecisionMetricLinkItem = {
+  id: string;
+  metricId: string;
+  metricName: string;
+  metricUnit: string;
+  metricDirection: string;
+  linkedAt: string;
+  latestSnapshot: {
+    id: string;
+    value: number;
+    occurredAt: string;
+    source: string;
+    createdAt: string;
+  } | null;
 };
 
 export type DecisionListItem = {
@@ -204,7 +240,7 @@ export function buildImpactRepo(sql: Sql) {
       opts?: { initiativeId?: string },
     ): Promise<MetricListItem[]> {
       const rows = await sql<DbMetricRow[]>`
-    select id, initiative_id, name, unit, direction, created_at
+    select id, initiative_id as "initiativeId", name, unit, direction, created_at as "createdAt", created_by as "createdBy"
     from metrics
     where org_id = ${orgId}
     ${opts?.initiativeId ? sql`and initiative_id = ${opts.initiativeId}` : sql``}
@@ -222,12 +258,46 @@ export function buildImpactRepo(sql: Sql) {
       }));
     },
 
+    async getMetricById(orgId: string, id: string) {
+      const rows = await sql<DbMetricDetailRow[]>`
+    select
+      id,
+      name,
+      unit,
+      direction,
+      created_at as "createdAt"
+    from metrics
+    where org_id = ${orgId}
+      and id = ${id}
+    limit 1
+  `;
+
+      const metric = rows[0];
+      if (!metric) {
+        throw new AppError('NOT_FOUND', 'Metric not found', 404);
+      }
+
+      const snapshots = await this.getLatestSnapshots(id, 30);
+      const decisions = await this.listDecisionsForMetric(id);
+
+      return {
+        id: metric.id,
+        name: metric.name,
+        // description: metric.description ?? '',
+        unit: metric.unit,
+        direction: metric.direction,
+        createdAt: toIsoOrNull(metric.createdAt) ?? '',
+        snapshots,
+        decisions,
+      };
+    },
+
     async listMetricsByInitiative(
       orgId: string,
       initiativeId: string,
     ): Promise<MetricListItem[]> {
       const rows = await sql<DbMetricRow[]>`
-    select id, initiative_id, name, unit, direction, created_at
+    select id, initiative_id as "initiativeId", name, unit, direction, created_at as "createdAt", created_by as "createdBy"
     from metrics
     where org_id = ${orgId}
       and initiative_id = ${initiativeId}
@@ -254,9 +324,77 @@ export function buildImpactRepo(sql: Sql) {
       createdBy: string;
     }) {
       await sql`
-        insert into metric_snapshots (id, metric_id, occurred_at, value, source, created_by)
-        values (${p.id}, ${p.metricId}, ${p.occurredAt}, ${p.value}, ${p.source}, ${p.createdBy})
-      `;
+    insert into metric_snapshots (
+      id,
+      metric_id,
+      occurred_at,
+      value,
+      source,
+      created_by
+    )
+    values (
+      ${p.id},
+      ${p.metricId},
+      ${p.occurredAt},
+      ${p.value},
+      ${p.source},
+      ${p.createdBy}
+    )
+  `;
+    },
+    async listMetricsForDecision(
+      decisionId: string,
+    ): Promise<DecisionMetricLinkItem[]> {
+      const rows = await sql<
+        {
+          id: string;
+          metric_id: string;
+          metric_name: string;
+          metric_description: string | null;
+          metric_unit: string;
+          metric_direction: string;
+          linked_at: Date | string | null;
+        }[]
+      >`
+    select
+      l.id,
+      l.metric_id,
+      m.name as metric_name,
+      m.unit as metric_unit,
+      m.direction as metric_direction,
+      l.created_at as linked_at
+    from decision_metric_links l
+    join metrics m on m.id = l.metric_id
+    where l.decision_id = ${decisionId}
+    order by l.created_at desc
+  `;
+
+      const items: DecisionMetricLinkItem[] = [];
+
+      for (const row of rows) {
+        const snapshots = await this.getLatestSnapshots(row.metric_id, 1);
+        const latest = snapshots[0] ?? null;
+
+        items.push({
+          id: row.id,
+          metricId: row.metric_id,
+          metricName: row.metric_name,
+          metricUnit: row.metric_unit,
+          metricDirection: row.metric_direction,
+          linkedAt: toIsoOrNull(row.linked_at) ?? '',
+          latestSnapshot: latest
+            ? {
+                id: latest.id,
+                value: latest.value,
+                occurredAt: latest.occurredAt,
+                source: latest.source,
+                createdAt: latest.createdAt,
+              }
+            : null,
+        });
+      }
+
+      return items;
     },
 
     async getLatestSnapshots(
@@ -264,7 +402,7 @@ export function buildImpactRepo(sql: Sql) {
       limit = 30,
     ): Promise<MetricSnapshot[]> {
       const rows = await sql<DbMetricSnapshotRow[]>`
-    select id, occurred_at, value, source, created_at
+    select id, occurred_at as "occurredAt", value, source, created_at as "createdAt", created_by as "createdBy"
     from metric_snapshots
     where metric_id = ${metricId}
     order by occurred_at desc
@@ -273,7 +411,7 @@ export function buildImpactRepo(sql: Sql) {
 
       return rows.map((r) => ({
         id: r.id,
-        occurredAt: new Date(r.occurred_at).toISOString(),
+        occurredAt: new Date(r.occurredAt).toISOString(),
         value: r.value,
         source: r.source,
         createdAt: toIsoOrNull(r.createdAt) ?? '',
@@ -292,6 +430,32 @@ export function buildImpactRepo(sql: Sql) {
         values (${p.id}, ${p.orgId}, ${p.decisionId}, ${p.initiativeId}, ${p.createdBy})
         on conflict (decision_id, initiative_id) do nothing
       `;
+    },
+
+    async linkDecisionToMetric(p: {
+      id: string;
+      orgId: string;
+      decisionId: string;
+      metricId: string;
+      createdBy: string;
+    }) {
+      await sql`
+    insert into decision_metric_links (
+      id,
+      org_id,
+      decision_id,
+      metric_id,
+      created_by
+    )
+    values (
+      ${p.id},
+      ${p.orgId},
+      ${p.decisionId},
+      ${p.metricId},
+      ${p.createdBy}
+    )
+    on conflict (decision_id, metric_id) do nothing
+  `;
     },
 
     async listLinksForDecision(
@@ -368,6 +532,39 @@ export function buildImpactRepo(sql: Sql) {
         title: r.title,
         status: r.status,
         createdAt: toIsoOrNull(r.createdAt) ?? '',
+      }));
+    },
+
+    async listDecisionsForMetric(
+      metricId: string,
+    ): Promise<MetricDecisionLinkItem[]> {
+      const rows = await sql<
+        {
+          id: string;
+          decision_id: string;
+          decision_title: string;
+          decision_status: string;
+          created_at: Date | string | null;
+        }[]
+      >`
+    select
+      l.id,
+      l.decision_id,
+      d.title as decision_title,
+      d.status as decision_status,
+      l.created_at
+    from decision_metric_links l
+    join decisions d on d.id = l.decision_id
+    where l.metric_id = ${metricId}
+    order by l.created_at desc
+  `;
+
+      return rows.map((r) => ({
+        id: r.id,
+        decisionId: r.decision_id,
+        decisionTitle: r.decision_title,
+        decisionStatus: r.decision_status,
+        createdAt: toIsoOrNull(r.created_at) ?? '',
       }));
     },
   };

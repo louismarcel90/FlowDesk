@@ -15,6 +15,7 @@ export const UpdateInitiativeStatusSchema = z.object({
 
 export const CreateMetricSchema = z.object({
   name: z.string().min(2),
+  // description: z.string().min(1),
   unit: z.string().min(1),
   direction: z.enum(['up', 'down']),
   initiativeId: z.string().optional(),
@@ -22,10 +23,14 @@ export const CreateMetricSchema = z.object({
 
 export const CreateMetricSnapshotSchema = z.object({
   occurredAt: z.string().datetime(),
-  value: z.number(),
+  value: z.number().min(0, 'Value must be >= 0'),
   source: z.enum(['manual', 'import']).default('manual'),
 });
 
 export const LinkDecisionSchema = z.object({
   initiativeId: z.string().min(1),
+});
+
+export const LinkDecisionToMetricSchema = z.object({
+  metricId: z.string().uuid(),
 });
