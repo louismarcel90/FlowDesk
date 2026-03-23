@@ -10,7 +10,7 @@ type DecisionCard = Pick<Decision, 'id' | 'title' | 'status'>;
 
 export default function LinkDecisionPage() {
   const params = useParams<{ id: string }>();
-  const initiativeId = params?.id;
+  const initiativeId = params.id;
 
   const [q, setQ] = useState('');
   const [items, setItems] = useState<DecisionCard[]>([]);
@@ -19,82 +19,76 @@ export default function LinkDecisionPage() {
   const [error, setError] = useState('');
   const [banner, setBanner] = useState('');
   const [selected, setSelected] = useState<DecisionCard | null>(null);
-  const [success, setSuccess] = useState('');
-  const [results, setResults] = useState<Decision[]>([]);
-
-  const DECISIONS_SEARCH_URL = useMemo(
-    () => (query: string) => `/decisions?search=${encodeURIComponent(query)}`,
-    [],
-  );
 
   useEffect(() => {
-    setError('');
-    setSuccess('');
+    let cancelled = false;
 
-    const term = q.trim();
-    if (term.length === 0) {
-      setResults([]);
-      return;
-    }
+    async function load() {
+      setError('');
+      setLoading(true);
 
-    const t = window.setTimeout(async () => {
       try {
-        setLoading(true);
-        // ⚠️ tes décisions semblent être sur /decisions?search= (pas /impact)
-        const res = await apiFetch<Decision[]>(
-          `/decisions?search=${encodeURIComponent(term)}`,
-        );
-        setResults(Array.isArray(res) ? res : []);
+        // On charge toute la liste une seule fois.
+        // Si ton backend est sous /impact/decisions, remplace juste cette ligne.
+        const res: any = await apiFetch('/decisions');
+
+        const arr = Array.isArray(res)
+          ? res
+          : Array.isArray(res?.items)
+            ? res.items
+            : [];
+
+        if (!cancelled) {
+          setItems(arr);
+        }
       } catch (e: any) {
-        setError(String(e?.message ?? e));
-        setResults([]);
+        if (!cancelled) {
+          setError(String(e?.message ?? e));
+          setItems([]);
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
-    }, 200);
-
-    return () => window.clearTimeout(t);
-  }, [q]);
-
-  async function load() {
-    setError('');
-    setLoading(true);
-    try {
-      // si q vide, tu peux charger "recent" (backend) ou juste vide
-      const res: any = await apiFetch(
-        `/decisions?search=${encodeURIComponent(q.trim())}`,
-      );
-      const arr = Array.isArray(res)
-        ? res
-        : Array.isArray(res?.items)
-          ? res.items
-          : [];
-      setItems(arr);
-    } catch (e: any) {
-      setError(String(e?.message ?? e));
-      setItems([]);
-    } finally {
-      setLoading(false);
     }
-  }
 
-  // live search
-  useEffect(() => {
-    const t = window.setTimeout(load, 180);
-    return () => window.clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [q]);
-
-  // initial load
-  useEffect(() => {
     load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
+
+  const filteredItems = useMemo(() => {
+    const term = q.trim().toLowerCase();
+
+    if (!term) return items;
+
+    return items.filter((d) => {
+      const title = (d.title ?? '').toLowerCase();
+      const id = (d.id ?? '').toLowerCase();
+      const status = (d.status ?? '').toLowerCase();
+
+      return title.includes(term) || id.includes(term) || status.includes(term);
+    });
+  }, [items, q]);
+
+  useEffect(() => {
+    if (!selected) return;
+
+    const stillVisible = filteredItems.some((d) => d.id === selected.id);
+    if (!stillVisible) {
+      setSelected(null);
+    }
+  }, [filteredItems, selected]);
 
   async function link() {
     if (!initiativeId || !selected) return;
+
     setError('');
     setBanner('');
+
     try {
       setLinking(true);
 
@@ -128,6 +122,7 @@ export default function LinkDecisionPage() {
           <Link className="fd-btn" href="/initiatives">
             Back
           </Link>
+
           <button
             className="fd-btn fd-btn--primary"
             type="button"
@@ -164,7 +159,7 @@ export default function LinkDecisionPage() {
               className="fd-input"
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Search decisions…"
+              placeholder="Search decisions..."
             />
           </div>
 
@@ -172,12 +167,13 @@ export default function LinkDecisionPage() {
 
           {loading ? (
             <div className="fd-muted">Loading…</div>
-          ) : items.length === 0 ? (
+          ) : filteredItems.length === 0 ? (
             <div className="fd-muted">No decisions found.</div>
           ) : (
             <div className="fd-grid" style={{ gap: 12 }}>
-              {items.map((d) => {
+              {filteredItems.map((d) => {
                 const isActive = selected?.id === d.id;
+
                 return (
                   <div
                     key={d.id}
@@ -193,10 +189,14 @@ export default function LinkDecisionPage() {
                       background: isActive ? 'rgba(124,58,237,.08)' : undefined,
                     }}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter') setSelected(d);
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setSelected(d);
+                      }
                     }}
                   >
                     <div className="fd-item-title">{d.title ?? d.id}</div>
+
                     <div className="fd-item-meta" style={{ marginTop: 10 }}>
                       <span className="fd-chip">{d.id}</span>
                       {d.status ? (
