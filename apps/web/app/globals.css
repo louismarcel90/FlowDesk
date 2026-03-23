@@ -367,6 +367,28 @@ a:hover {
   box-shadow: none;
 }
 
+.fd-btn--mid {
+  background: linear-gradient(
+    135deg,
+    rgba(99, 102, 241, 0.35),
+    /* bleu atténué */ rgba(59, 130, 246, 0.15) /* bleu très léger */
+  );
+  border: 1px solid rgba(99, 102, 241, 0.35);
+  color: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(6px);
+  transition: all 0.2s ease;
+}
+
+.fd-btn--mid:hover {
+  background: linear-gradient(
+    135deg,
+    rgba(99, 102, 241, 0.55),
+    rgba(59, 130, 246, 0.25)
+  );
+  border-color: rgba(99, 102, 241, 0.6);
+  transform: translateY(-1px);
+}
+
 .fd-btn--danger {
   border-color: rgba(255, 77, 125, 0.45);
   background: rgba(255, 77, 125, 0.16);

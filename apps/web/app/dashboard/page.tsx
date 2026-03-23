@@ -63,8 +63,11 @@ export default function DashboardPage() {
             <a className="fd-btn fd-btn--primary" href="/decisions">
               View Decisions
             </a>
-            <a className="fd-btn" href="/initiatives">
+            <a className="fd-btn fd-btn--mid" href="/initiatives">
               View Initiatives
+            </a>
+            <a className="fd-btn" href="/metrics">
+              View Metrics
             </a>
           </div>
         </div>

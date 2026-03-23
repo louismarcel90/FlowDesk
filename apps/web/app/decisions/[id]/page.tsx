@@ -12,6 +12,8 @@ type DecisionMetricLink = {
   metricUnit: string;
   metricDirection: 'up' | 'down';
   linkedAt?: string | Date;
+  targetDirection?: 'up' | 'down';
+  baselineValue?: number | null;
   latestSnapshot: {
     id: string;
     value: number;
@@ -214,6 +216,110 @@ function TimelineItem({
   );
 }
 
+function computeMetricScore(metric: DecisionMetricLink): number {
+  if (!metric.latestSnapshot) return 40;
+
+  const trend = computeMetricTrend(metric);
+
+  if (trend === 'improving') return 100;
+  if (trend === 'stable') return 65;
+  if (trend === 'degrading') return 20;
+
+  return 40;
+}
+
+function computeDecisionHealth(metrics: DecisionMetricLink[]) {
+  if (!metrics.length) return 50;
+
+  const scores = metrics.map(computeMetricScore);
+  const total = scores.reduce((sum, score) => sum + score, 0);
+
+  return Math.round(total / scores.length);
+}
+
+function healthTone(score: number) {
+  if (score >= 75) {
+    return {
+      label: 'Strong alignment',
+      color: '#22c55e',
+    };
+  }
+
+  if (score >= 50) {
+    return {
+      label: 'Moderate',
+      color: '#eab308',
+    };
+  }
+
+  return {
+    label: 'At risk',
+    color: '#ef4444',
+  };
+}
+
+type TrendState = 'improving' | 'degrading' | 'stable' | 'no-data';
+
+function computeMetricTrend(metric: DecisionMetricLink): TrendState {
+  if (!metric.latestSnapshot) return 'no-data';
+
+  const value = metric.latestSnapshot.value;
+
+  if (metric.metricDirection === 'up') {
+    if (value > 0) return 'improving';
+    if (value === 0) return 'stable';
+    return 'degrading';
+  }
+
+  if (metric.metricDirection === 'down') {
+    if (value === 0) return 'improving';
+    if (value > 0 && value <= 3) return 'stable';
+    if (value > 3) return 'degrading';
+  }
+
+  return 'no-data';
+}
+
+function trendTone(trend: TrendState) {
+  if (trend === 'improving') {
+    return {
+      label: 'Improving',
+      color: '#22c55e',
+      border: '1px solid rgba(34,197,94,.35)',
+      background: 'rgba(34,197,94,.10)',
+      arrow: '↑',
+    };
+  }
+
+  if (trend === 'degrading') {
+    return {
+      label: 'Degrading',
+      color: '#ef4444',
+      border: '1px solid rgba(239,68,68,.35)',
+      background: 'rgba(239,68,68,.10)',
+      arrow: '↓',
+    };
+  }
+
+  if (trend === 'stable') {
+    return {
+      label: 'Stable',
+      color: '#eab308',
+      border: '1px solid rgba(234,179,8,.35)',
+      background: 'rgba(234,179,8,.10)',
+      arrow: '→',
+    };
+  }
+
+  return {
+    label: 'No data',
+    color: 'rgba(255,255,255,.72)',
+    border: '1px solid rgba(255,255,255,.14)',
+    background: 'rgba(255,255,255,.06)',
+    arrow: '•',
+  };
+}
+
 export default function DecisionDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
@@ -232,7 +338,19 @@ export default function DecisionDetailPage() {
   const linkedMetrics = Array.isArray(data?.linkedMetrics)
     ? data.linkedMetrics
     : [];
+  const healthScore = computeDecisionHealth(linkedMetrics);
+  const health = healthTone(healthScore);
+  const improvingCount = linkedMetrics.filter(
+    (metric) => computeMetricTrend(metric) === 'improving',
+  ).length;
 
+  const degradingCount = linkedMetrics.filter(
+    (metric) => computeMetricTrend(metric) === 'degrading',
+  ).length;
+
+  const stableCount = linkedMetrics.filter(
+    (metric) => computeMetricTrend(metric) === 'stable',
+  ).length;
   useEffect(() => {
     if (!decisionId) return;
 
@@ -244,6 +362,25 @@ export default function DecisionDetailPage() {
   async function refresh() {
     const refreshed = await apiFetch(`/decisions/${decisionId}`);
     setData(refreshed);
+  }
+
+  async function updateStatus(nextStatus: string) {
+    if (!decisionId) return;
+
+    try {
+      setBusy('status');
+
+      await apiFetch(`/decisions/${decisionId}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: nextStatus }),
+      });
+
+      await refresh();
+    } catch (e: any) {
+      setError(String(e?.message ?? e));
+    } finally {
+      setBusy(null);
+    }
   }
 
   async function addComment() {
@@ -307,7 +444,7 @@ export default function DecisionDetailPage() {
             <h1>{decision.title}</h1>
 
             <div className="fd-row fd-wrap">
-              {/* <span style={badgeStyle(status)}>{statusLabel(status)}</span> */}
+              <span style={badgeStyle(status)}>{statusLabel(status)}</span>
 
               {decision.createdAt && (
                 <span className="fd-pill">
@@ -564,6 +701,8 @@ export default function DecisionDetailPage() {
                 <div className="fd-stack" style={{ gap: 12 }}>
                   {linkedMetrics.map((metric) => {
                     const tone = metricDirectionTone(metric.metricDirection);
+                    const trend = computeMetricTrend(metric);
+                    const trendStyle = trendTone(trend);
 
                     return (
                       <Link
@@ -617,6 +756,16 @@ export default function DecisionDetailPage() {
                                 <span className="fd-chip">
                                   {metric.metricUnit}
                                 </span>
+                                <span
+                                  className="fd-chip"
+                                  style={{
+                                    color: trendStyle.color,
+                                    border: trendStyle.border,
+                                    background: trendStyle.background,
+                                  }}
+                                >
+                                  {trendStyle.arrow} {trendStyle.label}
+                                </span>
 
                                 <span
                                   className="fd-chip"
@@ -647,6 +796,17 @@ export default function DecisionDetailPage() {
                                 }}
                               >
                                 Latest snapshot
+                              </div>
+                              <div
+                                className="fd-muted"
+                                style={{
+                                  fontSize: '.9rem',
+                                  textAlign: 'right',
+                                  color: trendStyle.color,
+                                  fontWeight: 700,
+                                }}
+                              >
+                                {trendStyle.arrow} {trendStyle.label}
                               </div>
 
                               <div
@@ -698,6 +858,112 @@ export default function DecisionDetailPage() {
         </div>
 
         <div className="fd-stack" style={{ gap: 16 }}>
+          <section className="fd-card fd-card--elevated">
+            <div className="fd-card-header">
+              <div>
+                <div className="fd-card-title">Decision Health</div>
+                <div className="fd-card-subtitle">
+                  Aggregated signal from linked metrics.
+                </div>
+              </div>
+            </div>
+
+            <div className="fd-card-inner">
+              <div
+                style={{
+                  display: 'grid',
+                  gap: 12,
+                  justifyItems: 'center',
+                  textAlign: 'center',
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: '3rem',
+                    fontWeight: 900,
+                    color: health.color,
+                  }}
+                >
+                  {healthScore}%
+                </div>
+
+                <div
+                  style={{
+                    width: '100%',
+                    height: 8,
+                    borderRadius: 999,
+                    background: 'rgba(255,255,255,.08)',
+                    overflow: 'hidden',
+                  }}
+                >
+                  <div
+                    style={{
+                      width: `${healthScore}%`,
+                      height: '100%',
+                      background: health.color,
+                      transition: 'width 0.4s ease',
+                    }}
+                  />
+                </div>
+
+                <div
+                  style={{
+                    fontWeight: 700,
+                    color: 'rgba(255,255,255,.9)',
+                  }}
+                >
+                  {health.label}
+                </div>
+
+                <div className="fd-muted" style={{ fontSize: '.9rem' }}>
+                  Based on {linkedMetrics.length} metric
+                  {linkedMetrics.length > 1 ? 's' : ''}
+                </div>
+                <div
+                  className="fd-row"
+                  style={{
+                    gap: 8,
+                    flexWrap: 'wrap',
+                    justifyContent: 'center',
+                    marginTop: 6,
+                  }}
+                >
+                  <span
+                    className="fd-chip"
+                    style={{
+                      color: '#22c55e',
+                      border: '1px solid rgba(34,197,94,.35)',
+                      background: 'rgba(34,197,94,.10)',
+                    }}
+                  >
+                    ↑ {improvingCount} improving
+                  </span>
+
+                  <span
+                    className="fd-chip"
+                    style={{
+                      color: '#eab308',
+                      border: '1px solid rgba(234,179,8,.35)',
+                      background: 'rgba(234,179,8,.10)',
+                    }}
+                  >
+                    → {stableCount} stable
+                  </span>
+
+                  <span
+                    className="fd-chip"
+                    style={{
+                      color: '#ef4444',
+                      border: '1px solid rgba(239,68,68,.35)',
+                      background: 'rgba(239,68,68,.10)',
+                    }}
+                  >
+                    ↓ {degradingCount} degrading
+                  </span>
+                </div>
+              </div>
+            </div>
+          </section>
           <section className="fd-card">
             <div className="fd-card-header">
               <div>
@@ -712,50 +978,89 @@ export default function DecisionDetailPage() {
               <div className="fd-stack" style={{ gap: 12 }}>
                 {STATUS_ORDER.map((item, index) => {
                   const active = index <= currentStage;
+                  const isCurrent = item === status;
                   const style = getStatusStyle(item);
 
                   return (
-                    <div
+                    <button
                       key={item}
-                      className="fd-row"
+                      type="button"
+                      onClick={() => {
+                        console.log('clicked status =', item);
+                        updateStatus(item);
+                      }}
+                      disabled={busy === 'status' || isCurrent}
                       style={{
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        padding: '10px 12px',
-                        borderRadius: 14,
+                        width: '100%',
+                        cursor:
+                          busy === 'status' || isCurrent
+                            ? 'not-allowed'
+                            : 'pointer',
+                        opacity: busy === 'status' ? 0.6 : 1,
+                        textAlign: 'left',
                         background: active
                           ? style.bg
                           : 'rgba(255,255,255,.025)',
                         border: `1px solid ${
                           active ? style.border : 'rgba(255,255,255,.08)'
                         }`,
+                        borderRadius: 14,
+                        padding: '10px 12px',
+                        transition: 'all .18s ease',
+                        color: 'inherit',
                       }}
                     >
                       <div
+                        className="fd-row"
                         style={{
-                          fontWeight: 700,
-                          color: active ? style.text : 'rgba(255,255,255,.62)',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
                         }}
                       >
-                        {statusLabel(item)}
-                      </div>
-
-                      {item === status ? (
-                        <span
-                          className="fd-chip"
+                        <div
                           style={{
-                            color: style.text,
-                            border: `1px solid ${style.border}`,
-                            background: style.bg,
+                            fontWeight: 700,
+                            color: active
+                              ? style.text
+                              : 'rgba(255,255,255,.62)',
                           }}
                         >
-                          Current
-                        </span>
-                      ) : null}
-                    </div>
+                          {statusLabel(item)}
+                        </div>
+
+                        {isCurrent ? (
+                          <span
+                            className="fd-chip"
+                            style={{
+                              color: style.text,
+                              border: `1px solid ${style.border}`,
+                              background: style.bg,
+                            }}
+                          >
+                            Current
+                          </span>
+                        ) : (
+                          <span
+                            className="fd-muted"
+                            style={{
+                              fontSize: '.88rem',
+                              color: 'rgba(255,255,255,.48)',
+                            }}
+                          >
+                            Click to set
+                          </span>
+                        )}
+                      </div>
+                    </button>
                   );
                 })}
               </div>
+
+              {busy === 'status' ? (
+                <div className="fd-muted" style={{ marginTop: 12 }}>
+                  Updating status...
+                </div>
+              ) : null}
             </div>
           </section>
 
