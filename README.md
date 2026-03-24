@@ -39,35 +39,22 @@ Problems:
 - Unclear ownership
 - No traceability
 
-FlowDesk enables:
-
-- Decision tracking
-- Impact visibility
-- Alignment across teams
-
----
-
-## 🧠 What is FlowDesk / Why It Exists
-
-FlowDesk is a **decision intelligence platform** designed to bring **clarity, traceability, and governance** to complex systems.
-
-Modern systems don’t fail because of code.  
-They fail because of **unclear decisions, misalignment, and lack of visibility**.
-
 FlowDesk solves this by making:
 
 - Decisions **first-class objects**
 - Initiatives **traceable to outcomes**
 - Metrics **linked to real impact**
 
+---
+
+## 🧠 What is FlowDesk / Why It Exists
+
+Modern systems don’t fail because of code.  
+They fail because of **unclear decisions, misalignment, and lack of visibility**.
+
+FlowDesk is a **decision intelligence platform** designed to bring **clarity, traceability, and governance** to complex systems.
+
 All powered by a **real-time system designed for clarity at scale**.
-
-### This project is a representation of:
-
-- Decision systems
-- Governance platforms
-- Real-time system thinking
-- Enterprise architecture patterns
 
 ---
 
@@ -281,7 +268,17 @@ NODE_ENV=development
 
 ```bash
 
-pnpm test
+pnpm format
+pnpm format:check
+
+```
+
+```bash
+
+pnpm run lint
+pnpm run typecheck
+pnpm run test
+pnpm run build
 
 ```
 
