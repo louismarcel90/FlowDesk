@@ -35,15 +35,15 @@ Company X is scaling its platform.
 
 Problems:
 
-- conflicting decisions
-- unclear ownership
-- no traceability
+- Conflicting decisions
+- Unclear ownership
+- No traceability
 
 FlowDesk enables:
 
-- decision tracking
-- impact visibility
-- alignment across teams
+- Decision tracking
+- Impact visibility
+- Alignment across teams
 
 ---
 
@@ -56,35 +56,33 @@ They fail because of **unclear decisions, misalignment, and lack of visibility**
 
 FlowDesk solves this by making:
 
-- decisions **first-class objects**
-- initiatives **traceable to outcomes**
-- metrics **linked to real impact**
+- Decisions **first-class objects**
+- Initiatives **traceable to outcomes**
+- Metrics **linked to real impact**
 
 All powered by a **real-time system designed for clarity at scale**.
 
----
-
 ### This project is a representation of:
 
-• decision systems  
-• governance platforms  
-• real-time system thinking  
-• enterprise architecture patterns
+- Decision systems
+- Governance platforms
+- Real-time system thinking
+- Enterprise architecture patterns
 
 ---
 
 ## 🧱 Core Capabilities
 
-• 🧠 Decision lifecycle management (create → link → evaluate → resolve)  
-• 🔗 Initiative ↔ Decision ↔ Metric linking  
-• 📊 Real-time health scoring system  
-• 🔔 Notification system (event-driven)  
-• 📈 Metric snapshots & historical tracking  
-• 🧭 Governance visibility layer  
-• 🧾 Audit-ready system design  
-• ⚡ Deterministic state evolution  
-• 🧩 Modular domain architecture  
-• 🏆 Decision impact tracking
+- 🧠 Decision lifecycle management (create → link → evaluate → resolve)
+- 🔗 Initiative ↔ Decision ↔ Metric linking
+- 📊 Real-time health scoring system
+- 🔔 Notification system (event-driven)
+- 📈 Metric snapshots & historical tracking
+- 🧭 Governance visibility layer
+- 🧾 Audit-ready system design
+- ⚡ Deterministic state evolution
+- 🧩 Modular domain architecture
+- 🏆 Decision impact tracking
 
 ---
 
@@ -198,7 +196,7 @@ Make sure you have installed:
 
 ```bash
 
-git clone https://github.com/your-username/flowdesk.git
+git clone https://github.com/louismarcel90/flowdesk.git
 cd flowdesk
 pnpm install
 
@@ -210,9 +208,8 @@ pnpm install
 
 FlowDesk relies on local infrastructure services:
 
-PostgreSQL (core state)
-
-Redis (real-time + caching)
+- PostgreSQL (core state)
+- Redis (real-time + caching)
 
 Start infra:
 
@@ -353,17 +350,12 @@ RANKING:
 
 ## 🧭 Engineering Notes
 
-• Decisions are immutable events
-
-• State is derived, not mutated
-
-• Audit is first-class (append-only)
-
-• System is event-driven by design
-
-• Deterministic flows enable predictability
-
-• Observability is built-in, not added later
+- Decisions are immutable events
+- State is derived, not mutated
+- Audit is first-class (append-only)
+- System is event-driven by design
+- Deterministic flows enable predictability
+- Observability is built-in, not added later
 
 ---
 
@@ -373,9 +365,9 @@ FlowDesk is not a CRUD app.
 
 It is a system where:
 
-- decisions propagate impact
-- state is derived from events
-- outcomes are measurable
+- Decisions propagate impact
+- State is derived from events
+- Outcomes are measurable
 
 ---
 
@@ -389,17 +381,12 @@ FlowDesk exists to make decisions visible, traceable, and accountable.
 
 ## 🔮 Future Work
 
-• Multi-tenant enterprise isolation
-
-• Distributed event bus (Kafka / Redpanda)
-
-• AI-assisted decision recommendations
-
-• Real-time collaboration layer
-
-• Advanced analytics dashboard
-
-• External integrations (Slack / Jira / APIs)
+- Multi-tenant enterprise isolation
+- Distributed event bus (Kafka / Redpanda)
+- AI-assisted decision recommendations
+- Real-time collaboration layer
+- Advanced analytics dashboard
+- External integrations (Slack / Jira / APIs)
 
 ---
 
@@ -413,11 +400,9 @@ Built with precision, systems thinking, and a performance-first mindset.
 
 If you find this project interesting:
 
-• ⭐ Star the repository
-
-• 🍴 Fork it
-
-• 🧠 Explore the architecture
+- ⭐ Star the repository
+- 🍴 Fork it
+- 🧠 Explore the architecture
 
 ---
 
