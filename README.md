@@ -196,7 +196,7 @@ Make sure you have installed:
 
 ```bash
 
-git clone https://github.com/louismarcel90/flowdesk.git
+git clone https://github.com/louismarcel90/FlowDesk.git
 cd flowdesk
 pnpm install
 
