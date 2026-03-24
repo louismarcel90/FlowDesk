@@ -16,56 +16,332 @@
 
 ---
 
-## 1. 🧠 What is FlowDesk / Why It Exists
+> Turning decisions into first-class citizens.
 
-FlowDesk is a full-stack decision governance platform that systematically captures, structures, audits, and evolves high-impact decisions.
+• Enterprise-grade decision system  
+• Real-time governance & traceability  
+• Built for clarity, not chaos
 
-It institutionalizes decision traceability across organizations, mitigating knowledge loss, misalignment, and the recurrence of costly mistakes.
-
----
-
-## 2. ⚠️ Problems FlowDesk Solves
-
-- Decision loss & knowledge decay: fragmented decisions lose rationale and accountability
-- Untracked trade-offs: choices are made without lasting visibility into alternatives, risks, or assumptions
-- Organisational misalignment at scale: growth causes decision drift, leading to rework and repeated mistakes
+![node](https://img.shields.io/badge/node-%3E%3D18-green)
+![license](https://img.shields.io/badge/license-MIT-blue)
+![interface](https://img.shields.io/badge/interface-Web%20App-black)
+![architecture](https://img.shields.io/badge/architecture-Event--Driven-purple)
 
 ---
 
-## 3. 🧪 What FlowDesk Demonstrates
+## 🧠 What is FlowDesk / Why It Exists
 
-- System-level thinking: decisions modeled as first-class domain entities rather than unstructured documents
-- Architectural leadership: intentional trade-offs between delivery speed, scalability, and long-term evolvability
-- Product & governance mindset: security, ownership, UX, and feedback loops designed in from day one
+FlowDesk is a **decision intelligence platform** designed to bring **clarity, traceability, and governance** to complex systems.
 
----
+Modern systems don’t fail because of code.  
+They fail because of **unclear decisions, misalignment, and lack of visibility**.
 
-## 4. 🧱 Core Capabilities
+FlowDesk solves this by making:
 
-- Structured decision lifecycle: decisions modeled with clear context, options, trade-offs, ownership, and outcomes
-- Decision-to-impact traceability: link decisions to initiatives and measurable business or technical metrics over time
-- Collaborative governance: RBAC, comments, change history, and audit trails for alignment and accountability
+- decisions **first-class objects**
+- initiatives **traceable to outcomes**
+- metrics **linked to real impact**
 
----
-
-## 5. 📐 Scale & Constraints
-
-- Designed for multi-team decision workflows, reducing decision latency by 30–45% and rework by ~40%, where clarity and traceability outweigh raw throughput
-- Optimized for long-lived data integrity and auditability, supporting 5–10+ years of historical reasoning and reducing audit or data-correction incidents by 50–70%
-- Architecture prioritizes organizational scalability (ownership, accountability, governance), enabling 2–3× team growth without proportional coordination overhead while sustaining 99.9%+ reliability
+All powered by a **real-time system designed for clarity at scale**.
 
 ---
 
-## 6. ⚙️ Key Engineering Features
+### This project is a representation of:
 
-- Intentional architecture & boundaries: modular monolith with clear domains, optimized for speed and long-term evolution
-- Security and governance by default: RBAC, ownership, audit logs, and schema validation built into the API layer
-- Operational and delivery maturity: CI/CD, multi-environment deployments, observability, and safe rollback practices
+• decision systems  
+• governance platforms  
+• real-time system thinking  
+• enterprise architecture patterns
 
 ---
 
-## 7. 🏛️ Why FlowDesk Matters
+## 🧱 Core Capabilities
 
-Treating decisions as long-lived system artifacts — capturing organisational reasoning rather than letting it decay into tribal knowledge is a must.
+• 🧠 Decision lifecycle management (create → link → evaluate → resolve)  
+• 🔗 Initiative ↔ Decision ↔ Metric linking  
+• 📊 Real-time health scoring system  
+• 🔔 Notification system (event-driven)  
+• 📈 Metric snapshots & historical tracking  
+• 🧭 Governance visibility layer  
+• 🧾 Audit-ready system design  
+• ⚡ Deterministic state evolution  
+• 🧩 Modular domain architecture  
+• 🏆 Decision impact tracking
 
-FlowDesk hard-codes decision traceability, accountability, and governance into the architecture itself — aligning technical rigor with human workflows and measurable business impact.
+---
+
+## ⚙️ System Architecture
+
+```bash
+
+       [ User / UI Layer ]
+                │
+                ▼
+ +----------------------------------+
+ |         FlowDesk Platform        |
+ |  decision intelligence engine    |
+ +----------------------------------+
+                │
+                ▼
+
+ +----------------------------------+
+ |        Application Layer         |
+ | - decisions                      |
+ | - initiatives                    |
+ | - metrics                        |
+ | - notifications                  |
+ +----------------------------------+
+                │
+                ▼
+
+ +----------------------------------+
+ |        Domain Engine             |
+ | - decision lifecycle             |
+ | - linking engine                 |
+ | - scoring engine                 |
+ | - audit logic                    |
+ +----------------------------------+
+                │
+                ▼
+
+ +----------------------------------+
+ |        Event System              |
+ | - decision.created               |
+ | - initiative.linked              |
+ | - metric.updated                 |
+ | - notification.triggered         |
+ +----------------------------------+
+                │
+                ▼
+
+ +----------------------------------+
+ |        Data Layer                |
+ | - PostgreSQL (core state)        |
+ | - Redis (real-time / cache)      |
+ | - Append-only audit logs         |
+ +----------------------------------+
+
+```
+
+---
+
+## 🏛️ Project Structure
+
+```bash
+
+flowdesk/
+│
+├── apps/
+│   ├── web/                # Next.js frontend
+│   └── api/                # Node.js backend
+│
+├── services/
+│   ├── decision-service/
+│   ├── initiative-service/
+│   ├── metrics-service/
+│   ├── notification-service/
+│
+├── packages/
+│   ├── db/                 # Prisma / schema
+│   ├── contracts/          # events & types
+│   ├── ui-kit/             # design system
+│   ├── observability/      # logs / metrics
+│
+├── docs/
+│   ├── architecture.md
+│   ├── adr/
+│   ├── runbooks/
+│
+├── docker/
+├── .github/
+├── package.json
+└── README.md
+
+```
+
+---
+
+## 🚀 Getting Started
+
+1. Installation
+
+### 1.📋 Prerequisites
+
+Make sure you have installed:
+
+- Node.js >= 18
+- pnpm (recommended) or npm
+- Docker + Docker Compose
+- Git
+
+---
+
+### ⚙️ 2. Clone & Install
+
+```bash
+
+git clone https://github.com/your-username/flowdesk.git
+cd flowdesk
+pnpm install
+
+```
+
+---
+
+### 🐳 3. Start Infrastructure
+
+FlowDesk relies on local infrastructure services:
+
+PostgreSQL (core state)
+Redis (real-time + caching)
+
+Start infra:
+
+```bash
+
+pnpm infra:up
+
+```
+
+👉 Alternative (if scripts not configured):
+
+```bash
+
+docker-compose up -d
+Check running services:
+pnpm infra:ps
+
+```
+
+Or:
+
+```bash
+
+docker ps
+
+```
+
+---
+
+### 🧬 4. Database Setup
+
+Run migrations:
+
+```bash
+
+pnpm db:migrate
+
+```
+
+Typical variables:
+
+```bash
+
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/flowdesk
+REDIS_URL=redis://localhost:6379
+NODE_ENV=development
+
+```
+
+---
+
+### 🚀 5. Start Application
+
+Start dev:
+
+```bash
+
+ pnpm -C apps/web dev
+
+```
+
+start dev:
+
+```bash
+
+pnpm api:dev
+
+```
+
+---
+
+### 🎬 6. Verify System
+
+Open:
+
+```bash
+
+http://localhost:3000
+
+```
+
+API:
+
+```bash
+
+http://localhost:4000
+
+```
+
+---
+
+## 📊 Example Output
+
+DECISION RESOLVED
+
+```bash
+
+✔ Decision: Migrate to event-driven architecture
+✔ Impact Score: +18%
+✔ System Stability: Improved
+
+RANKING:
+1. Cost Optimization
+2. Performance Gains
+3. Reliability
+
+```
+
+---
+
+## 🧠 Engineering Notes
+
+• Decisions are immutable events
+• State is derived, not mutated
+• Audit is first-class (append-only)
+• System is event-driven by design
+• Deterministic flows enable predictability
+• Observability is built-in, not added later
+
+---
+
+## 🔮 Future Work
+
+• Multi-tenant enterprise isolation
+• Distributed event bus (Kafka / Redpanda)
+• AI-assisted decision recommendations
+• Real-time collaboration layer
+• Advanced analytics dashboard
+• External integrations (Slack / Jira / APIs)
+
+---
+
+## 👨‍💻 Author
+
+Built with precision, systems thinking, and a performance-first mindset.
+
+---
+
+## ⭐ Support
+
+If you find this project interesting:
+
+• ⭐ Star the repository
+• 🍴 Fork it
+• 🧠 Explore the architecture
+
+---
+
+## 📄 License
+
+MIT License
