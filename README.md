@@ -99,7 +99,6 @@ All powered by a **real-time system designed for clarity at scale**.
  +----------------------------------+
                 │
                 ▼
-
  +----------------------------------+
  |        Application Layer         |
  | - decisions                      |
@@ -109,7 +108,6 @@ All powered by a **real-time system designed for clarity at scale**.
  +----------------------------------+
                 │
                 ▼
-
  +----------------------------------+
  |        Domain Engine             |
  | - decision lifecycle             |
@@ -119,7 +117,6 @@ All powered by a **real-time system designed for clarity at scale**.
  +----------------------------------+
                 │
                 ▼
-
  +----------------------------------+
  |        Event System              |
  | - decision.created               |
@@ -129,7 +126,6 @@ All powered by a **real-time system designed for clarity at scale**.
  +----------------------------------+
                 │
                 ▼
-
  +----------------------------------+
  |        Data Layer                |
  | - PostgreSQL (core state)        |
@@ -185,10 +181,14 @@ flowdesk/
 
 Make sure you have installed:
 
+```bash
+
 - Node.js >= 18
 - pnpm (recommended) or npm
 - Docker + Docker Compose
 - Git
+
+```
 
 ---
 
