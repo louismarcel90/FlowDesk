@@ -163,9 +163,9 @@ flowdesk/
 
 ## 🚀 Getting Started
 
-1. Installation
+### 📦 1. Installation
 
-### 1.📋 Prerequisites
+#### 📋 Prerequisites
 
 Make sure you have installed:
 
@@ -193,6 +193,7 @@ pnpm install
 FlowDesk relies on local infrastructure services:
 
 PostgreSQL (core state)
+
 Redis (real-time + caching)
 
 Start infra:
@@ -208,7 +209,13 @@ pnpm infra:up
 ```bash
 
 docker-compose up -d
+
+```
+
 Check running services:
+
+```bash
+
 pnpm infra:ps
 
 ```
@@ -255,7 +262,7 @@ Start dev:
 
 ```
 
-start dev:
+start api:
 
 ```bash
 
@@ -307,10 +314,15 @@ RANKING:
 ## 🧠 Engineering Notes
 
 • Decisions are immutable events
+
 • State is derived, not mutated
+
 • Audit is first-class (append-only)
+
 • System is event-driven by design
+
 • Deterministic flows enable predictability
+
 • Observability is built-in, not added later
 
 ---
@@ -318,10 +330,15 @@ RANKING:
 ## 🔮 Future Work
 
 • Multi-tenant enterprise isolation
+
 • Distributed event bus (Kafka / Redpanda)
+
 • AI-assisted decision recommendations
+
 • Real-time collaboration layer
+
 • Advanced analytics dashboard
+
 • External integrations (Slack / Jira / APIs)
 
 ---
@@ -337,7 +354,9 @@ Built with precision, systems thinking, and a performance-first mindset.
 If you find this project interesting:
 
 • ⭐ Star the repository
+
 • 🍴 Fork it
+
 • 🧠 Explore the architecture
 
 ---
