@@ -434,7 +434,7 @@ export default function NewMetricSnapshotPage() {
                     className="fd-input"
                     value={source}
                     onChange={(e) => setSource(e.target.value)}
-                    placeholder="e.g. manual, datadog, warehouse, jira"
+                    placeholder="choose between manual, datadog, warehouse, jira"
                   />
                 </div>
               </div>

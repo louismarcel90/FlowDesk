@@ -24,7 +24,16 @@ export const CreateMetricSchema = z.object({
 export const CreateMetricSnapshotSchema = z.object({
   occurredAt: z.string().datetime(),
   value: z.number().min(0, 'Value must be >= 0'),
-  source: z.enum(['manual', 'import']).default('manual'),
+  source: z.string().superRefine((val, ctx) => {
+    const allowed = ['manual', 'datalog', 'warehouse', 'jira'];
+
+    if (!allowed.includes(val)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'invalid source',
+      });
+    }
+  }),
 });
 
 export const LinkDecisionSchema = z.object({
