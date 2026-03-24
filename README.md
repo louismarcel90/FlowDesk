@@ -29,6 +29,24 @@
 
 ---
 
+## ⚡ Real World Scenario
+
+Company X is scaling its platform.
+
+Problems:
+
+- conflicting decisions
+- unclear ownership
+- no traceability
+
+FlowDesk enables:
+
+- decision tracking
+- impact visibility
+- alignment across teams
+
+---
+
 ## 🧠 What is FlowDesk / Why It Exists
 
 FlowDesk is a **decision intelligence platform** designed to bring **clarity, traceability, and governance** to complex systems.
@@ -230,7 +248,17 @@ docker ps
 
 ---
 
-### 🧬 4. Database Setup
+### 🔐 4. Push Policies
+
+```bash
+
+pnpm policy:push
+
+```
+
+---
+
+### 🧬 5. Database Setup
 
 Run migrations:
 
@@ -252,7 +280,19 @@ NODE_ENV=development
 
 ---
 
-### 🚀 5. Start Application
+🧪 Run Tests
+
+```bash
+
+pnpm test
+
+```
+
+Note: API tests require infrastructure to be running.
+
+---
+
+### 🚀 6. Start Application
 
 Start dev:
 
@@ -272,7 +312,7 @@ pnpm api:dev
 
 ---
 
-### 🎬 6. Verify System
+### 🎬 7. Verify System
 
 Open:
 
@@ -311,7 +351,7 @@ RANKING:
 
 ---
 
-## 🧠 Engineering Notes
+## 🧭 Engineering Notes
 
 • Decisions are immutable events
 
@@ -324,6 +364,26 @@ RANKING:
 • Deterministic flows enable predictability
 
 • Observability is built-in, not added later
+
+---
+
+## 🧩 System Thinking
+
+FlowDesk is not a CRUD app.
+
+It is a system where:
+
+- decisions propagate impact
+- state is derived from events
+- outcomes are measurable
+
+---
+
+## 🧭 Philosophy
+
+Clarity scales. Chaos compounds.
+
+FlowDesk exists to make decisions visible, traceable, and accountable.
 
 ---
 
