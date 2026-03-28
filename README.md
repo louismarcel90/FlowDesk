@@ -14,8 +14,6 @@
 <img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/opentelemetry/opentelemetry-original.svg" width="40" height="40"/>
 </p>
 
----
-
 > Turning decisions into first-class citizens.
 
 ![node](https://img.shields.io/badge/node-%3E%3D18-green)
@@ -42,13 +40,13 @@ FlowDesk makes decisions:
 
 ## ⚡ Real World Scenario
 
-### ❌ Problem
+ ❌ **Problem**
 Company systems break when:
 - decisions conflict
 - ownership is unclear
 - no traceability exists
 
-### ✅ Solution
+ ✅ **Solution**
 
 FlowDesk treats decisions as first-class objects:
 
@@ -140,7 +138,7 @@ flowdesk/
 │   ├── notification-service/
 │
 ├── packages/
-│   ├── db/                 # Prisma / schema
+│   ├── db/                 # Postgres / schema
 │   ├── contracts/          # events & types
 │   ├── ui-kit/             # design system
 │   ├── observability/      # logs / metrics
@@ -162,16 +160,16 @@ flowdesk/
 ## ⚖️ Trade-offs
 
 - Event-driven architecture  
-  → + traceability  
-  → − complexity
+  **→** + traceability  
+  **→** − complexity
 
 - Real-time scoring  
-  → + visibility  
-  → − compute cost
+  **→** + visibility  
+  **→** − compute cost
 
 - Append-only logs  
-  → + auditability  
-  → − storage growth
+  **→** + auditability  
+  **→** − storage growth
 
 ---
 
@@ -380,50 +378,45 @@ System tested with:
 
 This system is designed for real-world constraints.
 
-```bash
 📊 **Performance (simulated)**
-
+```bash
 ✔ ~5k events/sec ingestion
 ✔ <10ms read latency (Redis)
 ✔ ~40ms write latency (PostgreSQL)
 ✔ <200ms state rebuild (10k events)
 ```
-```bash
-⚠️ **Constraints**
 
+⚠️ **Constraints**
+```bash
 - Event replay cost grows with history
 - Redis limits hot-state scalability
 - PostgreSQL bottlenecks under heavy writes
 - Real-time scoring increases compute cost
 ```
 
-```bash
 🧨 **Failure Model**
-
+```bash
 - Duplicate, late, and out-of-order events are expected
 - State is rebuilt deterministically from event history
 - Event handling is idempotent
 ```
 
-```bash
 🛡️ **Safety**
-
+```bash
 - Redis failure → fallback to PostgreSQL
 - Processing failure → retry-ready (DLQ)
 - Scoring failure → last stable state used
 ```
 
-```bash
 📐 **Guarantees**
-
+```bash
 - Deterministic state reconstruction
 - Append-only audit log
 - Idempotent processing
 ```
 
-```bash
 ✅ **Verification**
-
+```bash
 - Event replay consistency tests
 - Snapshot validation vs event history
 ```
