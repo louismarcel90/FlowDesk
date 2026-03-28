@@ -25,8 +25,8 @@
 
 ## 🧠 What is FlowDesk / Why It Exists
 
-Modern systems don’t fail because of code.  
-They fail because of:
+Modern systems don’t fail because of code. They fail because of:
+
 - unclear decisions
 - misalignment
 - lack of visibility
@@ -41,6 +41,7 @@ FlowDesk makes decisions:
 ## ⚡ Real World Scenario
 
  ❌ **Problem**
+
 Company systems break when:
 - decisions conflict
 - ownership is unclear
@@ -58,9 +59,7 @@ FlowDesk treats decisions as first-class objects:
 
 ## 🧩 System Thinking
 
-FlowDesk is not a CRUD app.
-
-It is a system where:
+FlowDesk is not a CRUD app. It is a system where:
 
 - Decisions propagate impact
 - State is derived from events
