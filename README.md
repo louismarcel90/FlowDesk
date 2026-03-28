@@ -357,22 +357,6 @@ http://localhost:3001
 
 ---
 
-## 📊 Performance & Scale (Simulated)
-
-```bash
-✔ Event ingestion: ~5k events/sec (local simulation)
-✔ Read latency (Redis): < 10ms
-✔ Write latency (Postgres): ~40ms
-✔ Snapshot rebuild: < 200ms for 10k events
-
-System tested with:
-- concurrent decision updates
-- out-of-order event streams
-
-```
-
----
-
 ## 📡 Runtime Reality 
 
 This system is designed for real-world constraints.
