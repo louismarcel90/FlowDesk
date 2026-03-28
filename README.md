@@ -32,6 +32,7 @@ Modern systems don’t fail because of code. They fail because of:
 - lack of visibility
 
 FlowDesk makes decisions:
+
 - visible
 - traceable
 - accountable
@@ -40,14 +41,15 @@ FlowDesk makes decisions:
 
 ## ⚡ Real World Scenario
 
- ❌ **Problem**
+❌ **Problem**
 
 Company systems break when:
+
 - decisions conflict
 - ownership is unclear
 - no traceability exists
 
- ✅ **Solution**
+✅ **Solution**
 
 FlowDesk treats decisions as first-class objects:
 
@@ -357,11 +359,12 @@ http://localhost:3001
 
 ---
 
-## 📡 Runtime Reality 
+## 📡 Runtime Reality
 
 This system is designed for real-world constraints.
 
 📊 **Performance (simulated)**
+
 ```bash
 ✔ ~5k events/sec ingestion
 ✔ <10ms read latency (Redis)
@@ -370,6 +373,7 @@ This system is designed for real-world constraints.
 ```
 
 ⚠️ **Constraints**
+
 ```bash
 - Event replay cost grows with history
 - Redis limits hot-state scalability
@@ -378,6 +382,7 @@ This system is designed for real-world constraints.
 ```
 
 🧨 **Failure Model**
+
 ```bash
 - Duplicate, late, and out-of-order events are expected
 - State is rebuilt deterministically from event history
@@ -385,6 +390,7 @@ This system is designed for real-world constraints.
 ```
 
 🛡️ **Safety**
+
 ```bash
 - Redis failure → fallback to PostgreSQL
 - Processing failure → retry-ready (DLQ)
@@ -392,6 +398,7 @@ This system is designed for real-world constraints.
 ```
 
 📐 **Guarantees**
+
 ```bash
 - Deterministic state reconstruction
 - Append-only audit log
@@ -399,10 +406,12 @@ This system is designed for real-world constraints.
 ```
 
 ✅ **Verification**
+
 ```bash
 - Event replay consistency tests
 - Snapshot validation vs event history
 ```
+
 ---
 
 ## 👨‍💻 Author
