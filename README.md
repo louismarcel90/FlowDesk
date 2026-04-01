@@ -320,7 +320,7 @@ Note: API tests require infrastructure to be running.
 
 ---
 
-### 🚀 6. Start Application
+### 🎬 6. Verify System
 
 Start dev:
 
