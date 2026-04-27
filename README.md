@@ -126,7 +126,7 @@ State is not stored. It is computed.
 
 ---
 
-## 🏛️ Project Structure
+## 🏗 Project Structure
 
 ```bash
 
@@ -198,7 +198,7 @@ It is designed to recover from it.
 
 ---
 
-🏛️ Engineering Constitution
+## 🏛️ Engineering Constitution
 
 > Non-negotiable engineering laws governing this system.
 
